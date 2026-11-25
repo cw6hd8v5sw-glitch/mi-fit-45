@@ -1502,3 +1502,490 @@ renderProgress();
 })();
 </script>
 <!-- FIN DE ACTUALIZACION 2.1 -->
+
+<!-- MI FIT 45 - ACTUALIZACION 2.2 -->
+<style>
+.fit-today{
+ background:linear-gradient(135deg,#483353,#876492);
+ color:white;
+ border-radius:20px;
+ padding:20px;
+ margin-bottom:16px;
+}
+.fit-today h2{
+ color:white;
+ margin:8px 0;
+}
+.fit-today small{
+ color:#eee3f2;
+}
+.fit-today button{
+ background:white;
+ color:#633d70;
+ width:100%;
+ margin-top:12px;
+ font-weight:bold;
+}
+.fit-today input{
+ color:#483353;
+}
+.fit-effort{
+ padding:14px;
+ border-radius:14px;
+ background:#f3edf6;
+ margin:14px 0;
+}
+.fit-effort h4{
+ margin:0 0 8px;
+ color:#483353;
+}
+.fit-effort-options{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:8px;
+ margin-top:12px;
+}
+.fit-effort-options button{
+ background:white;
+ color:#735482;
+ border:1px solid #ded3e4;
+ padding:12px 5px;
+ font-size:13px;
+}
+.fit-effort-options button.active{
+ background:#735482;
+ color:white;
+ border-color:#735482;
+}
+.fit-advice{
+ padding:12px;
+ margin-top:12px;
+ background:white;
+ color:#483353;
+ border-radius:10px;
+ font-size:13px;
+ line-height:1.6;
+}
+.fit-advice.warning{
+ background:#fce8e8;
+ color:#982f2f;
+}
+.fit-previous{
+ color:#50866b;
+ font-size:12px;
+ margin-top:10px;
+}
+</style>
+
+<script>
+(function(){
+"use strict";
+
+const version=document.querySelector(".fit-version");
+if(version)version.textContent="Version 2.2";
+
+const originalWorkout22=renderWorkout;
+const originalProfile22=renderProfile;
+
+const effortOptions=[
+ ["easy","Muy fácil"],
+ ["good","Adecuado"],
+ ["hard","Difícil"],
+ ["pain","Dolor"]
+];
+
+function element(tag,cls,content){
+ const e=document.createElement(tag);
+ if(cls)e.className=cls;
+ if(content!==undefined)e.textContent=content;
+ return e;
+}
+
+function localDate(date){
+ const year=date.getFullYear();
+ const month=String(date.getMonth()+1).padStart(2,"0");
+ const day=String(date.getDate()).padStart(2,"0");
+ return year+"-"+month+"-"+day;
+}
+
+function dateNumber(value){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(value||""))
+ return NaN;
+
+ const parts=value.split("-").map(Number);
+
+ return Date.UTC(
+ parts[0],parts[1]-1,parts[2]
+ )/86400000;
+}
+
+function todayPosition(){
+ if(!state.profile.startDate)return null;
+
+ const difference=
+ dateNumber(localDate(new Date()))-
+ dateNumber(state.profile.startDate);
+
+ if(!Number.isFinite(difference))return null;
+
+ if(difference<0){
+ return {pending:true};
+ }
+
+ if(difference>=28){
+ return {finished:true};
+ }
+
+ return {
+ week:Math.floor(difference/7)+1,
+ day:difference%7
+ };
+}
+
+function renderToday(){
+ let card=document.getElementById("fitToday22");
+
+ if(!card){
+ card=element("div","fit-today");
+ card.id="fitToday22";
+ document.getElementById("inicio").prepend(card);
+ }
+
+ card.replaceChildren();
+
+ card.appendChild(element(
+ "small","",
+ new Date().toLocaleDateString("es-MX",{
+ weekday:"long",
+ day:"numeric",
+ month:"long",
+ year:"numeric"
+ })
+ ));
+
+ const position=todayPosition();
+
+ if(!position){
+ card.appendChild(element(
+ "h2","","Comienza tu programa"
+ ));
+
+ card.appendChild(element(
+ "p","","Selecciona el lunes en que iniciarás tus cuatro semanas de entrenamiento."
+ ));
+
+ const input=element("input");
+ input.type="date";
+
+ const monday=new Date();
+ const day=monday.getDay();
+ monday.setDate(
+ monday.getDate()+(day===1?0:(8-day)%7)
+ );
+
+ input.value=localDate(monday);
+
+ const button=element(
+ "button","","Iniciar mi programa"
+ );
+
+ button.onclick=()=>{
+ const date=new Date(input.value+"T12:00:00");
+
+ if(!input.value||date.getDay()!==1){
+ alert("Selecciona un lunes como fecha de inicio.");
+ return;
+ }
+
+ state.profile.startDate=input.value;
+ save();
+ renderToday();
+ };
+
+ card.append(input,button);
+ return;
+ }
+
+ if(position.pending){
+ card.appendChild(element(
+ "h2","","Tu programa comienza pronto"
+ ));
+
+ card.appendChild(element(
+ "p","","Fecha de inicio: "+
+ state.profile.startDate
+ ));
+
+ return;
+ }
+
+ if(position.finished){
+ card.appendChild(element(
+ "h2","","Fin del programa de 4 semanas"
+ ));
+
+ card.appendChild(element(
+ "p","","Revisa tu progreso antes de comenzar el siguiente programa."
+ ));
+
+ return;
+ }
+
+ const routine=plan[position.day];
+
+ card.append(
+ element("small","",
+ "Semana "+position.week+
+ " · "+days[position.day]),
+ element("h2","",routine[0]),
+ element("p","",routine[1])
+ );
+
+ const completed=state.history.some(
+ s=>s.key===position.week+"-"+position.day
+ );
+
+ const button=element(
+ "button","",
+ completed?
+ "Revisar entrenamiento de hoy":
+ "Abrir entrenamiento de hoy"
+ );
+
+ button.onclick=()=>{
+ state.week=position.week;
+ state.day=position.day;
+ save();
+ renderWorkout();
+ showPage("inicio");
+ };
+
+ card.appendChild(button);
+}
+
+function previousExercise(id){
+ const sessions=state.history
+ .filter(s=>
+ s.key!==key()&&
+ s.week*7+s.day<state.week*7+state.day&&
+ s.details&&s.details[id]
+ )
+ .slice()
+ .sort((a,b)=>
+ (b.week*7+b.day)-(a.week*7+a.day)
+ );
+
+ return sessions.length?
+ sessions[0].details[id]:null;
+}
+
+function adviceFor(id,record){
+ if(record.effort==="pain"){
+ return "Suspende este ejercicio. No intentes aumentar la resistencia ni entrenar con dolor. Si persiste, consulta a un profesional de salud.";
+ }
+
+ if(!record.effort){
+ return "Al terminar tus series, selecciona cómo sentiste el ejercicio.";
+ }
+
+ if(!record.done){
+ return "Completa las series que puedas realizar con buena técnica. No es necesario forzar las repeticiones.";
+ }
+
+ if(record.effort==="hard"){
+ return "No aumentes la resistencia. Descansa lo necesario y reduce las repeticiones o la carga si pierdes la técnica.";
+ }
+
+ if(record.effort==="good"){
+ return "Mantén la resistencia actual. Procura terminar cada serie sintiendo que podrías realizar otras 2 o 3 repeticiones.";
+ }
+
+ const cardio=[
+ "march","walk","mobility"
+ ];
+
+ if(cardio.includes(id)){
+ return "Mantén un ritmo cómodo. Si te recuperas bien, aumenta gradualmente la duración.";
+ }
+
+ if(id==="plank"){
+ return "Si mantienes una buena postura, prueba añadir 5 segundos en la próxima sesión.";
+ }
+
+ const series=record.series||[];
+ const target=parseInt(exercises[id][1],10);
+
+ const targetReached=
+ series.length>=sets(id)&&
+ series.every(s=>
+ /^\d+$/.test(String(s.reps).trim())&&
+ Number(s.reps)>=target&&s.done
+ );
+
+ if(!targetReached){
+ return "Primero alcanza las repeticiones previstas en todas tus series, manteniendo una técnica correcta.";
+ }
+
+ const previous=previousExercise(id);
+
+ const previousReached=
+ previous&&
+ previous.effort==="easy"&&
+ previous.done&&
+ Array.isArray(previous.series)&&
+ previous.series.length>0&&
+ previous.series.every(s=>
+ s.done&&
+ /^\d+$/.test(String(s.reps).trim())&&
+ Number(s.reps)>=target
+ );
+
+ if(previousReached){
+ return "Este ejercicio resultó fácil en dos sesiones registradas. Considera aumentar ligeramente la resistencia en la próxima sesión. Si no tienes otra carga, añade 1 o 2 repeticiones, hasta unas 15 por serie, sin perder la técnica.";
+ }
+
+ return "Prueba añadir 1 o 2 repeticiones en tu próxima sesión, sin superar unas 15 por serie. Mantén la misma resistencia por ahora.";
+}
+
+function addEffort(section,id){
+ const records=current();
+ const record=records[id];
+
+ if(!record)return;
+
+ const panel=element("div","fit-effort");
+
+ panel.append(
+ element("h4","","¿Cómo sentiste este ejercicio?"),
+ element("small","","Evalúa la dificultad al terminar tus series.")
+ );
+
+ const options=element(
+ "div","fit-effort-options"
+ );
+
+ const advice=element("div","fit-advice");
+
+ function refresh(){
+ options.querySelectorAll("button").forEach(b=>{
+ b.classList.toggle(
+ "active",b.dataset.effort===record.effort
+ );
+ });
+
+ advice.textContent=adviceFor(id,record);
+
+ advice.classList.toggle(
+ "warning",record.effort==="pain"
+ );
+ }
+
+ effortOptions.forEach(option=>{
+ const button=element("button","",option[1]);
+
+ button.type="button";
+ button.dataset.effort=option[0];
+
+ button.onclick=()=>{
+ record.effort=option[0];
+ records[id]=record;
+ save();
+ refresh();
+ };
+
+ options.appendChild(button);
+ });
+
+ panel.append(options,advice);
+
+ const previous=previousExercise(id);
+
+ if(previous&&previous.effort){
+ const label=effortOptions.find(
+ x=>x[0]===previous.effort
+ );
+
+ if(label){
+ panel.appendChild(element(
+ "div","fit-previous",
+ "Dificultad anterior: "+label[1]
+ ));
+ }
+ }
+
+ section.appendChild(panel);
+
+ section.addEventListener("input",refresh);
+ section.addEventListener("change",refresh);
+
+ refresh();
+}
+
+renderWorkout=function(){
+ originalWorkout22();
+
+ const ids=plan[state.day][2];
+
+ document.querySelectorAll(
+ "#exerciseList .exercise"
+ ).forEach((section,i)=>{
+ if(ids[i])addEffort(section,ids[i]);
+ });
+
+ renderToday();
+};
+
+function addStartDateProfile(){
+ let card=document.getElementById("fitStartProfile22");
+
+ if(!card){
+ card=element("div","card");
+ card.id="fitStartProfile22";
+ document.getElementById("perfil").prepend(card);
+ }
+
+ card.replaceChildren();
+
+ card.append(
+ element("h3","","Inicio de mi programa"),
+ element("p","","La fecha debe ser un lunes. Cambiarla no elimina tus registros existentes, pero cambia la rutina asignada a cada fecha.")
+ );
+
+ const input=element("input");
+ input.type="date";
+ input.value=state.profile.startDate||"";
+
+ const button=element(
+ "button","","Guardar fecha de inicio"
+ );
+
+ button.onclick=()=>{
+ const date=new Date(input.value+"T12:00:00");
+
+ if(!input.value||date.getDay()!==1){
+ alert("Selecciona un lunes.");
+ return;
+ }
+
+ state.profile.startDate=input.value;
+
+ if(save()){
+ renderToday();
+ alert("Fecha guardada");
+ }
+ };
+
+ card.append(input,button);
+}
+
+renderProfile=function(){
+ originalProfile22();
+ addStartDateProfile();
+};
+
+renderWorkout();
+renderProfile();
+
+})();
+</script>
+<!-- FIN DE ACTUALIZACION 2.2 -->
