@@ -2570,3 +2570,522 @@ renderLibrary();
 })();
 </script>
 <!-- FIN DE ACTUALIZACION 2.3 --> 
+
+<!-- MI FIT 45 - ACTUALIZACION 2.4 -->
+<style>
+.fit-equipment{
+ background:#fff;
+ padding:18px;
+ border-radius:20px;
+ margin-bottom:16px;
+}
+.fit-equipment-option{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ padding:14px 0;
+ border-bottom:1px solid #eee;
+ font-size:15px;
+}
+.fit-equipment-option input{
+ flex-shrink:0;
+ margin:0;
+}
+.fit-substitute{
+ background:#f3edf6;
+ border-radius:14px;
+ padding:14px;
+ margin:14px 0;
+}
+.fit-substitute select{
+ margin-top:12px;
+}
+.fit-substitute button{
+ width:100%;
+ margin-top:8px;
+}
+.fit-substitute-note{
+ font-size:12px;
+ color:#807587;
+ line-height:1.5;
+}
+.fit-equipment-count{
+ color:#735482;
+ font-size:26px;
+ font-weight:bold;
+ margin:12px 0;
+}
+.fit-variant-label{
+ background:#e8f1e9;
+ color:#35634b;
+ padding:9px;
+ border-radius:8px;
+ margin-bottom:12px;
+ font-size:12px;
+}
+</style>
+
+<script>
+(function(){
+"use strict";
+
+const previousWorkout24=renderWorkout;
+const previousProfile24=renderProfile;
+
+const version=document.querySelector(".fit-version");
+if(version)version.textContent="Version 2.4";
+
+const equipmentList24=[
+ ["dumbbells5","Mancuernas de 5 lb"],
+ ["bands","Ligas con agarraderas"],
+ ["mat","Tapete"],
+ ["adjustable","Mancuernas ajustables"],
+ ["bench","Banco de entrenamiento"],
+ ["machine","Máquina multifuncional"],
+ ["cables","Poleas"],
+ ["bike","Bicicleta estática"],
+ ["treadmill","Caminadora"]
+];
+
+const basePlan24=plan.map(
+ routine=>routine[2].slice()
+);
+
+const originalExerciseIds24=
+ Object.keys(exercises);
+
+const newExercises24={
+ squatBody:[
+ "Sentadilla sin peso","12",
+ "Flexiona cadera y rodillas, manteniendo los pies apoyados. Baja hasta donde puedas controlar el movimiento.",
+ "sentadilla peso corporal principiantes tecnica"
+ ],
+ rdlBody:[
+ "Bisagra de cadera sin peso","12",
+ "Flexiona ligeramente las rodillas y lleva la cadera hacia atrás. Mantén la espalda neutra.",
+ "bisagra de cadera sin peso tecnica"
+ ],
+ lungeBody:[
+ "Desplante hacia atrás sin peso",
+ "8 por lado",
+ "Da un paso atrás y baja de manera controlada. Utiliza un apoyo estable si necesitas equilibrio.",
+ "desplante hacia atras sin peso principiantes"
+ ],
+ bridgePause:[
+ "Puente de glúteos con pausa","12",
+ "Eleva la cadera y mantén la posición durante dos segundos antes de bajar.",
+ "puente de gluteos con pausa"
+ ],
+ pushWall:[
+ "Flexiones contra la pared","12",
+ "Coloca las manos sobre una pared firme a la altura del pecho. Flexiona los codos y vuelve lentamente.",
+ "flexiones contra pared principiantes"
+ ],
+ calfSeated:[
+ "Elevación de pantorrillas sentada",
+ "15",
+ "Sentada en una silla firme, eleva los talones y baja lentamente.",
+ "elevacion pantorrillas sentada sin peso"
+ ],
+ heelTap:[
+ "Toques de talón alternados",
+ "8 por lado",
+ "Acostada boca arriba con rodillas flexionadas, baja un talón de forma controlada sin arquear la zona lumbar.",
+ "heel taps abdominales principiantes"
+ ],
+ birdLeg:[
+ "Extensión de pierna en cuatro apoyos",
+ "8 por lado",
+ "Desde cuatro apoyos, extiende una pierna hacia atrás manteniendo estable la pelvis.",
+ "bird dog solo piernas ejercicio"
+ ],
+ plankWall:[
+ "Plancha contra la pared",
+ "20 segundos",
+ "Apoya las manos sobre una pared firme. Mantén el cuerpo alineado y el abdomen activo mientras respiras.",
+ "plancha contra pared principiantes"
+ ]
+};
+
+Object.assign(exercises,newExercises24);
+
+const alternatives24={
+ squat:["squatBody"],
+ rdl:["rdlBody"],
+ bridge:["bridgePause"],
+ lunge:["lungeBody"],
+ calf:["calfSeated"],
+ curl:["bandcurl"],
+ bandcurl:["curl"],
+ floor:["pushWall"],
+ deadbug:["heelTap"],
+ bird:["birdLeg"],
+ plank:["plankWall"]
+};
+
+function el24(tag,cls,text){
+ const e=document.createElement(tag);
+ if(cls)e.className=cls;
+ if(text!==undefined)e.textContent=text;
+ return e;
+}
+
+function equipment24(){
+ if(!Array.isArray(state.equipment24)){
+ state.equipment24=[
+ "dumbbells5","bands","mat"
+ ];
+ }
+ return state.equipment24;
+}
+
+function substitutions24(){
+ if(!state.substitutions24||
+ typeof state.substitutions24!=="object"){
+ state.substitutions24={};
+ }
+ return state.substitutions24;
+}
+
+function selectedEquipment24(id){
+ return equipment24().includes(id);
+}
+
+function canUse24(id){
+ const dumbbellIds=[
+ "squat","rdl","lunge","row",
+ "curl","press","floor"
+ ];
+
+ const floorIds=[
+ "bridge","bridgePause","floor",
+ "deadbug","heelTap","bird","birdLeg",
+ "plank","side"
+ ];
+
+ if(dumbbellIds.includes(id)&&
+ !selectedEquipment24("dumbbells5")&&
+ !selectedEquipment24("adjustable")){
+ return false;
+ }
+
+ if(id==="bandcurl"&&
+ !selectedEquipment24("bands")){
+ return false;
+ }
+
+ if(floorIds.includes(id)&&
+ !selectedEquipment24("mat")){
+ return false;
+ }
+
+ return true;
+}
+
+function applyPlan24(){
+ const substitutions=substitutions24();
+
+ for(let day=0;day<7;day++){
+ const sessionKey=state.week+"-"+day;
+ const choices=substitutions[sessionKey]||{};
+
+ plan[day][2]=basePlan24[day].map(
+ (original,index)=>{
+ const candidate=choices[index];
+
+ if(candidate&&
+ (alternatives24[original]||[])
+ .includes(candidate)){
+ return candidate;
+ }
+
+ return original;
+ });
+ }
+}
+
+function recordHasData24(record){
+ if(!record)return false;
+
+ if(record.done||record.effort)return true;
+
+ if(String(record.weight||"").trim())
+ return true;
+
+ if(String(record.reps||"")
+ .replace(/,/g,"").trim())
+ return true;
+
+ return Array.isArray(record.series)&&
+ record.series.some(s=>
+ s.done||
+ String(s.resistance||"").trim()||
+ String(s.reps||"").trim()
+ );
+}
+
+function sessionLocked24(){
+ if(state.history.some(s=>s.key===key())){
+ return true;
+ }
+
+ return Object.values(
+ state.records[key()]||{}
+ ).some(recordHasData24);
+}
+
+function addSubstitution24(section,index){
+ const original=basePlan24[state.day][index];
+ const active=plan[state.day][2][index];
+
+ if(!original||!active)return;
+
+ const options=[
+ original,
+ ...(alternatives24[original]||[])
+ ].filter((id,i,arr)=>arr.indexOf(id)===i);
+
+ if(active!==original){
+ const note=el24(
+ "div","fit-variant-label",
+ "Variante de: "+exercises[original][0]
+ );
+
+ section.prepend(note);
+ }
+
+ if(!canUse24(active)){
+ section.appendChild(el24(
+ "p","fit-substitute-note",
+ "Este ejercicio requiere equipo que no aparece en tu inventario. Revisa una alternativa antes de realizarlo."
+ ));
+ }
+
+ if(options.length<2)return;
+
+ const panel=el24("div","fit-substitute");
+
+ const toggle=el24(
+ "button","secondary",
+ "Cambiar ejercicio"
+ );
+
+ toggle.type="button";
+
+ const editor=el24("div","hidden");
+
+ editor.appendChild(el24(
+ "p","fit-substitute-note",
+ "Selecciona una variante que puedas realizar con buena técnica."
+ ));
+
+ const select=el24("select");
+
+ options.forEach(id=>{
+ const option=el24(
+ "option","",
+ exercises[id][0]+
+ (canUse24(id)?"":" — requiere equipo")
+ );
+
+ option.value=id;
+ option.disabled=!canUse24(id);
+ select.appendChild(option);
+ });
+
+ select.value=active;
+
+ const apply=el24(
+ "button","","Aplicar variante"
+ );
+
+ apply.type="button";
+
+ apply.onclick=()=>{
+ if(sessionLocked24()){
+ alert(
+ "Esta sesión ya contiene registros. Puedes modificar los ejercicios de una sesión que todavía no hayas comenzado."
+ );
+ return;
+ }
+
+ const replacement=select.value;
+
+ if(!options.includes(replacement)||
+ !canUse24(replacement))return;
+
+ if(replacement===active){
+ editor.classList.add("hidden");
+ return;
+ }
+
+ if(plan[state.day][2].some(
+ (id,i)=>i!==index&&id===replacement
+ )){
+ alert("Esta variante ya está incluida en la rutina.");
+ return;
+ }
+
+ const substitutions=substitutions24();
+ const sessionKey=key();
+
+ if(!substitutions[sessionKey]){
+ substitutions[sessionKey]={};
+ }
+
+ if(replacement===original){
+ delete substitutions[sessionKey][index];
+ }else{
+ substitutions[sessionKey][index]=
+ replacement;
+ }
+
+ if(state.records[sessionKey]){
+ const record=state.records[sessionKey][active];
+
+ if(!recordHasData24(record)){
+ delete state.records[sessionKey][active];
+ }
+ }
+
+ save();
+ renderWorkout();
+ };
+
+ toggle.onclick=()=>{
+ if(sessionLocked24()){
+ alert(
+ "Para conservar tu historial, elige las variantes antes de comenzar a registrar la sesión."
+ );
+ return;
+ }
+
+ editor.classList.toggle("hidden");
+ };
+
+ editor.append(select,apply);
+ panel.append(toggle,editor);
+ section.appendChild(panel);
+}
+
+function renderEquipment24(){
+ let card=document.getElementById(
+ "fitEquipment24"
+ );
+
+ if(!card){
+ card=el24("div","fit-equipment");
+ card.id="fitEquipment24";
+
+ document.getElementById("perfil")
+ .prepend(card);
+ }
+
+ card.replaceChildren();
+
+ card.append(
+ el24("h2","","Mi gimnasio en casa"),
+ el24("p","",
+ "Selecciona el equipo que tienes disponible.")
+ );
+
+ const count=el24(
+ "div","fit-equipment-count",
+ equipment24().length+" equipos"
+ );
+
+ card.appendChild(count);
+
+ equipmentList24.forEach(item=>{
+ const label=el24(
+ "label","fit-equipment-option"
+ );
+
+ const checkbox=el24("input");
+ checkbox.type="checkbox";
+ checkbox.checked=
+ selectedEquipment24(item[0]);
+
+ checkbox.onchange=()=>{
+ const selected=new Set(equipment24());
+
+ if(checkbox.checked){
+ selected.add(item[0]);
+ }else{
+ selected.delete(item[0]);
+ }
+
+ state.equipment24=Array.from(selected);
+
+ state.profile.equipment=
+ equipmentList24
+ .filter(e=>selected.has(e[0]))
+ .map(e=>e[1])
+ .join(", ");
+
+ save();
+
+ count.textContent=
+ selected.size+" equipos";
+
+ const oldInput=
+ document.getElementById("equipment");
+
+ if(oldInput){
+ oldInput.value=state.profile.equipment;
+ }
+ };
+
+ label.append(
+ checkbox,
+ el24("span","",item[1])
+ );
+
+ card.appendChild(label);
+ });
+
+ card.appendChild(el24(
+ "p","fit-substitute-note",
+ "Agregar equipo no modifica automáticamente tus rutinas. Las nuevas máquinas necesitarán ejercicios compatibles con sus características."
+ ));
+}
+
+renderWorkout=function(){
+ applyPlan24();
+ previousWorkout24();
+
+ document.querySelectorAll(
+ "#exerciseList .exercise"
+ ).forEach((section,index)=>{
+ const id=plan[state.day][2][index];
+
+ if(id==="plankWall"){
+ const grid=section.querySelector(
+ ".series-grid"
+ );
+
+ if(grid&&grid.children[2]){
+ grid.children[2].textContent="Tiempo";
+ }
+ }
+
+ addSubstitution24(section,index);
+ });
+};
+
+renderProfile=function(){
+ previousProfile24();
+ renderEquipment24();
+};
+
+equipment24();
+substitutions24();
+save();
+
+renderWorkout();
+renderProfile();
+
+})();
+</script>
+<!-- FIN DE ACTUALIZACION 2.4 -->
+ 
