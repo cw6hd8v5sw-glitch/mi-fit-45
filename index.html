@@ -519,3 +519,474 @@ renderProgress();
 </script>
 </body>
 </html>
+
+<!-- MI FIT 45 - ACTUALIZACION 2.0 -->
+<style>
+:root{
+ --fit:#735482;
+ --fit-light:#f0eaf4;
+ --fit-green:#50866b;
+}
+body{
+ background:#f5f3f7;
+ font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+}
+header{
+ background:linear-gradient(125deg,#483353,#876492);
+ padding:32px 22px;
+}
+header h1{
+ font-size:34px;
+ letter-spacing:-1px;
+}
+.card{
+ border-radius:20px;
+ padding:20px;
+ box-shadow:0 4px 20px #34234008;
+}
+.exercise{
+ padding:24px 0;
+}
+.exercise h3{
+ font-size:19px;
+ color:#483353;
+}
+nav{
+ box-shadow:0 -3px 20px #00000008;
+}
+nav button{
+ font-weight:600;
+}
+.series-grid{
+ display:grid;
+ grid-template-columns:55px 1fr 1fr 44px;
+ gap:8px;
+ align-items:center;
+}
+.series-grid input{
+ margin:0;
+ min-width:0;
+ text-align:center;
+}
+.series-grid small{
+ font-size:11px;
+}
+.series-grid input[type=checkbox]{
+ margin:auto;
+}
+.series-number{
+ font-size:13px;
+ font-weight:600;
+}
+.series-row{
+ display:contents;
+}
+.series-panel{
+ padding:14px;
+ margin:16px 0;
+ border-radius:14px;
+ background:#f7f4fa;
+}
+.series-panel h4{
+ margin:0 0 15px;
+}
+.fit-video{
+ position:relative;
+ aspect-ratio:16/9;
+ background:#302538;
+ border-radius:14px;
+ overflow:hidden;
+ margin:16px 0 8px;
+}
+.fit-video iframe{
+ width:100%;
+ height:100%;
+ border:0;
+}
+.fit-video button{
+ width:100%;
+ height:100%;
+ background:#483353;
+ font-size:16px;
+ border-radius:0;
+}
+.fit-rest{
+ display:flex;
+ gap:8px;
+ align-items:center;
+ flex-wrap:wrap;
+ margin:14px 0;
+}
+.fit-rest button{
+ flex:1;
+ padding:10px;
+}
+.fit-clock{
+ font-size:22px;
+ font-weight:bold;
+ min-width:65px;
+ color:#735482;
+ font-variant-numeric:tabular-nums;
+}
+.fit-complete{
+ padding:10px;
+ border-radius:10px;
+ color:#35634b;
+ background:#e5f1e8;
+ font-size:13px;
+ margin-top:10px;
+}
+.fit-version{
+ font-size:11px;
+ opacity:.8;
+ margin-top:10px;
+}
+@media(max-width:420px){
+ main{padding:12px 12px 100px}
+ .card{padding:15px}
+ .series-grid{
+ grid-template-columns:48px 1fr 1fr 36px;
+ gap:6px;
+ }
+}
+</style>
+
+<script>
+(function(){
+"use strict";
+
+const originalRender = renderWorkout;
+
+const videoLibrary = {
+ rdl:{
+ id:"D2Ac4HyXsB8",
+ title:"Peso muerto rumano con mancuernas",
+ author:"Priscilla BC"
+ }
+};
+
+const weightedExercises=[
+ "squat","rdl","lunge","row","curl",
+ "press","floor"
+];
+
+const timedExercises=[
+ "plank","march","walk","mobility"
+];
+
+const bandExercises=["bandcurl"];
+
+let restTimer=null;
+let activeClock=null;
+
+const version=document.createElement("div");
+version.className="fit-version";
+version.textContent="Version 2.0";
+document.querySelector("header").appendChild(version);
+
+function stopRest(){
+ clearInterval(restTimer);
+ restTimer=null;
+ if(activeClock){
+ activeClock.textContent="00:00";
+ }
+ activeClock=null;
+}
+
+function exerciseRest(clock,seconds){
+ stopRest();
+ activeClock=clock;
+ const end=Date.now()+seconds*1000;
+
+ function tick(){
+ const left=Math.max(
+ 0,Math.ceil((end-Date.now())/1000)
+ );
+ clock.textContent=
+ String(Math.floor(left/60)).padStart(2,"0")
+ +":"+
+ String(left%60).padStart(2,"0");
+
+ if(left===0){
+ clearInterval(restTimer);
+ restTimer=null;
+ clock.textContent="Lista";
+ if(navigator.vibrate){
+ navigator.vibrate(200);
+ }
+ }
+ }
+
+ tick();
+ restTimer=setInterval(tick,250);
+}
+
+function addVideo(section,id){
+ const video=videoLibrary[id];
+
+ if(!video)return;
+
+ const originalLink=section.querySelector("a");
+
+ if(originalLink){
+ originalLink.href=
+ "https://www.youtube.com/watch?v="+video.id;
+ originalLink.textContent=
+ "Ver video original de "+video.author;
+ }
+
+ const container=document.createElement("div");
+ container.className="fit-video";
+
+ const button=document.createElement("button");
+ button.type="button";
+ button.textContent="▶ Ver tecnica con "+video.author;
+
+ button.onclick=function(){
+ const frame=document.createElement("iframe");
+ frame.src="https://www.youtube-nocookie.com/embed/"
+ +video.id+"?autoplay=1&playsinline=1";
+ frame.title=video.title+" - "+video.author;
+ frame.allow=
+ "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture";
+ frame.allowFullscreen=true;
+ container.replaceChildren(frame);
+ };
+
+ container.appendChild(button);
+
+ if(originalLink){
+ originalLink.before(container);
+ }
+
+ const credit=document.createElement("p");
+ const small=document.createElement("small");
+ small.textContent=
+ "Video publico original de "+video.author+
+ ". Mi Fit 45 no esta afiliada a su autora.";
+ credit.appendChild(small);
+ container.after(credit);
+}
+
+function upgradeExercise(section,id){
+ const records=current();
+ const old=records[id]||{
+ weight:"",
+ reps:"",
+ done:false
+ };
+
+ const oldWeight=section.querySelector(".weight");
+ const oldReps=section.querySelector(".reps");
+ const oldDone=section.querySelector(".done");
+
+ if(!oldWeight||!oldReps||!oldDone)return;
+
+ const quantity=sets(id);
+ const isWeighted=weightedExercises.includes(id);
+ const isTimed=timedExercises.includes(id);
+ const isBand=bandExercises.includes(id);
+
+ const legacyReps=String(old.reps||"").split(",");
+
+ if(!Array.isArray(old.series)){
+ old.series=Array.from(
+ {length:quantity},
+ (_,i)=>({
+ resistance:old.weight||"",
+ reps:legacyReps[i]||"",
+ done:!!old.done
+ })
+ );
+ }
+
+ while(old.series.length<quantity){
+ old.series.push({
+ resistance:"",
+ reps:"",
+ done:false
+ });
+ }
+
+ records[id]=old;
+
+ const series=old.series.slice(0,quantity);
+ const panel=document.createElement("div");
+ panel.className="series-panel";
+
+ const heading=document.createElement("h4");
+ heading.textContent="Mis series";
+ panel.appendChild(heading);
+
+ const grid=document.createElement("div");
+ grid.className="series-grid";
+
+ const labels=[
+ "Serie",
+ isBand?"Liga":isWeighted?"Peso (lb)":"Carga",
+ isTimed?"Tiempo":"Reps.",
+ "Lista"
+ ];
+
+ labels.forEach(label=>{
+ const small=document.createElement("small");
+ small.textContent=label;
+ grid.appendChild(small);
+ });
+
+ const completed=document.createElement("div");
+ completed.className="fit-complete";
+
+ function sync(){
+ old.weight=series.find(
+ s=>s.resistance!==""
+ )?.resistance||"";
+
+ old.reps=series.map(s=>s.reps).join(",");
+ old.done=series.every(s=>s.done);
+ old.series=series;
+
+ records[id]=old;
+
+ completed.textContent=
+ series.filter(s=>s.done).length+
+ " de "+quantity+" series completadas";
+
+ save();
+ updateProgress();
+ }
+
+ series.forEach((data,i)=>{
+ const number=document.createElement("span");
+ number.className="series-number";
+ number.textContent="Serie "+(i+1);
+
+ const resistance=document.createElement("input");
+ resistance.type=isWeighted?"number":"text";
+
+ if(isWeighted){
+ resistance.min="0";
+ resistance.step="0.5";
+ resistance.placeholder="5";
+ }else if(isBand){
+ resistance.placeholder="Color";
+ }else{
+ resistance.placeholder="—";
+ }
+
+ resistance.value=data.resistance||"";
+ resistance.disabled=!isWeighted&&!isBand;
+
+ resistance.setAttribute(
+ "aria-label","Resistencia serie "+(i+1)
+ );
+
+ const reps=document.createElement("input");
+ reps.type="text";
+ reps.inputMode="decimal";
+ reps.placeholder=String(repetitions(id));
+ reps.value=data.reps||"";
+
+ reps.setAttribute(
+ "aria-label","Repeticiones o tiempo serie "+(i+1)
+ );
+
+ const check=document.createElement("input");
+ check.type="checkbox";
+ check.checked=!!data.done;
+
+ check.setAttribute(
+ "aria-label","Completar serie "+(i+1)
+ );
+
+ resistance.oninput=()=>{
+ data.resistance=resistance.value;
+ sync();
+ };
+
+ reps.oninput=()=>{
+ data.reps=reps.value;
+ sync();
+ };
+
+ check.onchange=()=>{
+ data.done=check.checked;
+ sync();
+ };
+
+ grid.append(number,resistance,reps,check);
+ });
+
+ panel.appendChild(grid);
+
+ const rest=document.createElement("div");
+ rest.className="fit-rest";
+
+ const clock=document.createElement("span");
+ clock.className="fit-clock";
+ clock.textContent="00:00";
+
+ const button60=document.createElement("button");
+ button60.type="button";
+ button60.textContent="60 s";
+ button60.onclick=()=>exerciseRest(clock,60);
+
+ const button90=document.createElement("button");
+ button90.type="button";
+ button90.textContent="90 s";
+ button90.onclick=()=>exerciseRest(clock,90);
+
+ const stop=document.createElement("button");
+ stop.type="button";
+ stop.className="secondary";
+ stop.textContent="Parar";
+ stop.onclick=stopRest;
+
+ rest.append(clock,button60,button90,stop);
+
+ completed.textContent=
+ series.filter(s=>s.done).length+
+ " de "+quantity+" series completadas";
+
+ panel.append(rest,completed);
+
+ const oldFields=oldWeight.closest(".flex");
+ const oldCheck=oldDone.closest("label");
+
+ if(oldFields){
+ oldFields.replaceWith(panel);
+ }
+ if(oldCheck){
+ oldCheck.remove();
+ }
+
+ old.done=series.every(s=>s.done);
+ records[id]=old;
+
+ addVideo(section,id);
+}
+
+renderWorkout=function(){
+ stopRest();
+ originalRender();
+
+ const ids=plan[state.day][2];
+ const sections=document.querySelectorAll(
+ "#exerciseList .exercise"
+ );
+
+ sections.forEach((section,i)=>{
+ if(ids[i]){
+ upgradeExercise(section,ids[i]);
+ }
+ });
+
+ save();
+ updateProgress();
+};
+
+renderWorkout();
+
+})();
+</script>
+<!-- FIN DE ACTUALIZACION 2.0 -->
