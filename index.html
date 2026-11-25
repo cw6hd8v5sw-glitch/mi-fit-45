@@ -3954,6 +3954,828 @@ showPage=function(id){
  previousShowPage25(id);
 };
 
+/* MI FIT 45 - ACTUALIZACION 2.6 */
+
+if(version)version.textContent="Version 2.6";
+
+const macro25={
+ oats:[16.9,66.3,6.9],
+ milk:[3.4,5,0.2],
+ yogurt:[10,3.6,1],
+ banana:[1.1,22.8,0.3],
+ apple:[0.3,13.8,0.2],
+ berries:[0.7,7.7,0.3],
+ peanut:[25,20,50],
+ eggs:[6.3,0.4,4.8],
+ whites:[10.9,0.7,0.2],
+ tuna:[25.5,0,0.8],
+ chicken:[31,0,3.6],
+ beef:[27,0,10],
+ pork:[28,0,6],
+ ground:[26,0,12],
+ rice:[2.7,28.2,0.3],
+ potato:[1.9,20.1,0.1],
+ sweet:[1.6,20.7,0.2],
+ tortilla:[5.7,44.6,2.9],
+ bread:[10,43,4],
+ beans:[8.7,22.8,0.5],
+ cottage:[11,3.4,4.3],
+ avocado:[2,8.5,14.7],
+ oil:[0,0,100],
+ broccoli:[2.4,7.2,0.4],
+ zucchini:[1.2,3.1,0.3],
+ carrot:[0.9,9.6,0.2],
+ spinach:[2.9,3.6,0.4],
+ cucumber:[0.7,3.6,0.1],
+ tomato:[0.9,3.9,0.2],
+ nuts:[21.2,21.6,49.9],
+ orange:[0.9,11.8,0.1]
+};
+
+const originalMeals26=JSON.parse(
+ JSON.stringify(meals25)
+);
+
+const originalSelected26=selectedMeal;
+const originalRenderMeal26=renderMeal;
+const originalRenderSettings26=renderSettings;
+const originalRenderMenu26=renderMenu;
+
+function preferences26(){
+ const n=nutrition();
+
+ if(!n.preferences26){
+ n.preferences26={
+ excluded:[],
+ preferred:[],
+ restricted:[],
+ available:[],
+ customExcluded:[
+ "Caldos","Coliflor","Queso panela"
+ ],
+ generation:0
+ };
+ }
+
+ return n.preferences26;
+}
+
+function normalize26(value){
+ return String(value)
+ .normalize("NFD")
+ .replace(/[\u0300-\u036f]/g,"")
+ .toLowerCase()
+ .trim();
+}
+
+function blockedFoods26(){
+ const p=preferences26();
+
+ return new Set([
+ ...p.excluded,
+ ...p.restricted
+ ]);
+}
+
+function allowedMeal26(id){
+ const meal=originalMeals26[id];
+
+ if(!meal)return false;
+
+ const blocked=blockedFoods26();
+
+ return meal.items.every(([food])=>
+ !blocked.has(food)
+ );
+}
+
+function macros26(meal){
+ const result={
+ protein:0,
+ carbs:0,
+ fat:0,
+ kcal:0
+ };
+
+ meal.items.forEach(([food,quantity])=>{
+ const f=foods[food];
+ const m=macro25[food];
+
+ if(!f||!m)return;
+
+ const factor=
+ f[1]==="pzas"?quantity:quantity/100;
+
+ result.protein+=m[0]*factor;
+ result.carbs+=m[1]*factor;
+ result.fat+=m[2]*factor;
+ result.kcal+=f[3]*quantity;
+ });
+
+ return result;
+}
+
+function targetMeal26(index){
+ const distribution=[
+ 400/1650,
+ 350/1650,
+ 550/1650,
+ 350/1650
+ ];
+
+ return nutrition().target*
+ distribution[index];
+}
+
+function candidateScore26(id,index,date){
+ const meal=originalMeals26[id];
+ const p=preferences26();
+ const m=macros26(meal);
+
+ let score=0;
+
+ meal.items.forEach(([food])=>{
+ if(p.preferred.includes(food))score+=3;
+ if(p.available.includes(food))score+=2;
+ });
+
+ if(nutrition().favorites.includes(id)){
+ score+=2;
+ }
+
+ const proteinTarget=[
+ 28,25,40,27
+ ][index];
+
+ score-=Math.abs(
+ m.protein-proteinTarget
+ )/8;
+
+ score-=Math.abs(
+ m.kcal-targetMeal26(index)
+ )/150;
+
+ const seed=Array.from(
+ date+id+String(p.generation)
+ ).reduce(
+ (a,c)=>a+c.charCodeAt(0),0
+ );
+
+ score+=Math.sin(seed)*2;
+
+ return score;
+}
+
+function chooseMeal26(date,index){
+ const candidates=alternatives25[index]
+ .filter(allowedMeal26);
+
+ if(!candidates.length)return null;
+
+ candidates.sort((a,b)=>
+ candidateScore26(b,index,date)-
+ candidateScore26(a,index,date)
+ );
+
+ return candidates[0];
+}
+
+function snapshots26(){
+ const n=nutrition();
+
+ if(!n.snapshots26)n.snapshots26={};
+
+ return n.snapshots26;
+}
+
+function adjustedMeal26(id,index){
+ const original=originalMeals26[id];
+
+ const energy=macros26(original).kcal;
+
+ const scale=Math.max(
+ 0.80,
+ Math.min(
+ 1.30,
+ targetMeal26(index)/Math.max(energy,1)
+ )
+ );
+
+ const items=original.items.map(
+ ([food,quantity])=>{
+ if(foods[food][1]==="pzas"){
+ return [food,quantity];
+ }
+
+ if(food==="oil"){
+ return [food,quantity];
+ }
+
+ let adjusted=Math.round(
+ quantity*scale/5
+ )*5;
+
+ return [food,Math.max(5,adjusted)];
+ }
+ );
+
+ return {
+ title:original.title,
+ prep:original.prep,
+ items:items,
+ base:id
+ };
+}
+
+function resolveRecipe26(date,index){
+ const data=daily(date);
+ const snapshotKey=date+"-"+index;
+ const snapshots=snapshots26();
+
+ if(data.done[index]){
+ if(!snapshots[snapshotKey]){
+ const oldId=originalSelected26(
+ date,index
+ );
+
+ if(meals25[oldId]){
+ snapshots[snapshotKey]=
+ JSON.parse(
+ JSON.stringify(meals25[oldId])
+ );
+ }
+ }
+
+ if(snapshots[snapshotKey]){
+ return snapshots[snapshotKey];
+ }
+ }
+
+ let base=data.choices[index]||
+ menu25[dayIndex(date)][index];
+
+ if(!allowedMeal26(base)){
+ base=chooseMeal26(date,index);
+ }
+
+ if(!base){
+ return {
+ title:"Sin alternativa compatible",
+ prep:"Revisa tus preferencias. No hay una receta disponible que cumpla todas las restricciones.",
+ items:[],
+ blocked:true
+ };
+ }
+
+ return adjustedMeal26(base,index);
+}
+
+selectedMeal=function(date,index){
+ const id="fit26_"+date+"_"+index;
+
+ meals25[id]=resolveRecipe26(date,index);
+
+ return id;
+};
+
+function foodMacrosLabel26(id){
+ const meal=meals25[id];
+
+ if(!meal||meal.blocked)return "";
+
+ const m=macros26(meal);
+
+ return "Proteína: "+
+ Math.round(m.protein)+" g · "+
+ "Carbohidratos: "+
+ Math.round(m.carbs)+" g · "+
+ "Grasas: "+
+ Math.round(m.fat)+" g";
+}
+
+function formatMacros26(m){
+ return "Proteínas "+
+ Math.round(m.protein)+" g · "+
+ "Carbohidratos "+
+ Math.round(m.carbs)+" g · "+
+ "Grasas "+
+ Math.round(m.fat)+" g";
+}
+
+renderMeal=function(index){
+ const id=selectedMeal(foodDate,index);
+ const meal=meals25[id];
+ const data=daily();
+
+ const c=el("div","fit-food");
+
+ c.append(
+ el("div","fit-food-time",
+ mealTimes[index]+" · "+
+ mealNames[index]),
+ el("h3","",meal.title)
+ );
+
+ if(meal.blocked){
+ c.appendChild(
+ el("p","fit-food-note",meal.prep)
+ );
+
+ return c;
+ }
+
+ c.append(
+ el("small","",
+ Math.round(calories(id))+" kcal aprox."),
+ el("p","fit-food-note",
+ foodMacrosLabel26(id))
+ );
+
+ meal.items.forEach(([food,qty])=>{
+ const f=foods[food];
+
+ const row=el(
+ "div","fit-food-ingredient"
+ );
+
+ row.append(
+ el("span","",f[0]),
+ el("strong","",qty+" "+f[1])
+ );
+
+ c.appendChild(row);
+ });
+
+ c.append(
+ el("p","fit-food-note",meal.prep),
+ el("small","",
+ "Carnes, arroz, papa y camote: peso cocido. Atún: drenado. Avena: peso seco.")
+ );
+
+ const actions=el(
+ "div","fit-food-actions"
+ );
+
+ const base=meal.base||
+ data.choices[index]||
+ menu25[dayIndex(foodDate)][index];
+
+ if(originalMeals26[base]){
+ const favorite=
+ nutrition().favorites.includes(base);
+
+ actions.appendChild(button(
+ favorite?"♥ Favorito":"♡ Guardar favorito",
+ ()=>{
+ const f=new Set(nutrition().favorites);
+
+ if(f.has(base))f.delete(base);
+ else f.add(base);
+
+ nutrition().favorites=Array.from(f);
+
+ save();
+ renderFood();
+ },true));
+ }
+
+ actions.appendChild(button(
+ "Cambiar comida",
+ ()=>{
+ if(data.done[index]){
+ alert("Desmarca la comida antes de cambiarla.");
+ return;
+ }
+
+ const previous=c.querySelector(
+ ".fit-food-alternatives"
+ );
+
+ if(previous){
+ previous.remove();
+ return;
+ }
+
+ const editor=el(
+ "div","fit-food-alternatives"
+ );
+
+ const options=alternatives25[index]
+ .filter(allowedMeal26);
+
+ if(!options.length){
+ editor.appendChild(el(
+ "p","",
+ "No hay alternativas compatibles."
+ ));
+
+ c.appendChild(editor);
+ return;
+ }
+
+ const select=el("select");
+
+ options.forEach(optionId=>{
+ const option=el(
+ "option","",
+ originalMeals26[optionId].title
+ );
+
+ option.value=optionId;
+ select.appendChild(option);
+ });
+
+ if(options.includes(base)){
+ select.value=base;
+ }
+
+ editor.append(
+ select,
+ button("Aplicar alternativa",()=>{
+ data.choices[index]=select.value;
+ delete snapshots26()[
+ foodDate+"-"+index
+ ];
+
+ save();
+ renderFood();
+ })
+ );
+
+ c.appendChild(editor);
+ },true));
+
+ c.appendChild(actions);
+
+ const label=el(
+ "label","fit-food-check"
+ );
+
+ const check=el("input");
+ check.type="checkbox";
+ check.checked=!!data.done[index];
+
+ check.onchange=()=>{
+ const snapshotKey=foodDate+"-"+index;
+
+ if(check.checked){
+ snapshots26()[snapshotKey]=
+ JSON.parse(JSON.stringify(meal));
+ }else{
+ delete snapshots26()[snapshotKey];
+ }
+
+ data.done[index]=check.checked;
+
+ save();
+ renderFood();
+ };
+
+ label.append(
+ check,
+ el("span","","Comida realizada")
+ );
+
+ c.appendChild(label);
+
+ if(data.done[index]){
+ c.appendChild(el(
+ "div","fit-food-done",
+ "Comida registrada"
+ ));
+ }
+
+ return c;
+};
+
+function freezeCompleted26(){
+ const n=nutrition();
+
+ Object.entries(n.days).forEach(
+ ([date,data])=>{
+ for(let i=0;i<4;i++){
+ if(data.done[i]){
+ resolveRecipe26(date,i);
+ }
+ }
+ });
+}
+
+function generateWeek26(){
+ freezeCompleted26();
+
+ preferences26().generation++;
+
+ weekDates().forEach(date=>{
+ const data=daily(date);
+
+ for(let i=0;i<4;i++){
+ if(data.done[i])continue;
+
+ const chosen=chooseMeal26(date,i);
+
+ if(chosen){
+ data.choices[i]=chosen;
+ }else{
+ delete data.choices[i];
+ }
+ }
+ });
+
+ nutrition().shopping={};
+
+ save();
+ renderFood();
+}
+
+function renderFoodGroups26(){
+ const c=card("Mis preferencias");
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Selecciona los alimentos que deseas evitar, los que prefieres y los que tienes en casa."
+ ));
+
+ const groups=[
+ ["excluded","No me gustan"],
+ ["preferred","Me gustan"],
+ ["available","Tengo en casa"],
+ ["restricted","Restricciones"]
+ ];
+
+ groups.forEach(([field,title])=>{
+ const details=el("details");
+
+ details.style.margin="12px 0";
+ details.style.padding="12px";
+ details.style.background="#f7f4fa";
+ details.style.borderRadius="12px";
+
+ const summary=el(
+ "summary","",
+ title+" ("+
+ preferences26()[field].length+")"
+ );
+
+ details.appendChild(summary);
+
+ const search=el("input");
+ search.type="search";
+ search.placeholder="Buscar alimento...";
+
+ details.appendChild(search);
+
+ const list=el("div");
+ details.appendChild(list);
+
+ function draw(){
+ list.replaceChildren();
+
+ const filter=normalize26(search.value);
+
+ Object.entries(foods)
+ .sort((a,b)=>
+ a[1][0].localeCompare(b[1][0])
+ )
+ .forEach(([id,f])=>{
+ if(!normalize26(f[0]).includes(filter)){
+ return;
+ }
+
+ const label=el(
+ "label","fit-food-check"
+ );
+
+ const check=el("input");
+ check.type="checkbox";
+ check.checked=
+ preferences26()[field].includes(id);
+
+ check.onchange=()=>{
+ freezeCompleted26();
+
+ const selection=new Set(
+ preferences26()[field]
+ );
+
+ if(check.checked)selection.add(id);
+ else selection.delete(id);
+
+ preferences26()[field]=
+ Array.from(selection);
+
+ if(
+ check.checked&&
+ ["excluded","restricted"].includes(field)
+ ){
+ preferences26().preferred=
+ preferences26().preferred
+ .filter(x=>x!==id);
+ }
+
+ summary.textContent=title+
+ " ("+selection.size+")";
+
+ nutrition().shopping={};
+
+ save();
+ };
+
+ label.append(
+ check,
+ el("span","",f[0])
+ );
+
+ list.appendChild(label);
+ });
+ }
+
+ search.oninput=draw;
+ draw();
+
+ c.appendChild(details);
+ });
+
+ c.appendChild(el(
+ "h3","","Otros alimentos excluidos"
+ ));
+
+ const customList=el("div");
+
+ function renderCustom(){
+ customList.replaceChildren();
+
+ preferences26().customExcluded
+ .forEach(name=>{
+ const row=el(
+ "div","fit-food-ingredient"
+ );
+
+ row.append(
+ el("span","",name),
+ button("Quitar",()=>{
+ preferences26().customExcluded=
+ preferences26().customExcluded
+ .filter(x=>x!==name);
+
+ save();
+ renderCustom();
+ },true)
+ );
+
+ customList.appendChild(row);
+ });
+ }
+
+ renderCustom();
+ c.appendChild(customList);
+
+ const custom=el("input");
+ custom.placeholder="Escribir otro alimento";
+
+ c.appendChild(custom);
+
+ c.appendChild(button("Agregar alimento",()=>{
+ const name=custom.value.trim();
+
+ if(!name)return;
+
+ const match=Object.keys(foods)
+ .filter(id=>
+ normalize26(foods[id][0])
+ .includes(normalize26(name))
+ );
+
+ freezeCompleted26();
+
+ if(match.length){
+ preferences26().excluded=
+ Array.from(new Set([
+ ...preferences26().excluded,
+ ...match
+ ]));
+
+ nutrition().shopping={};
+
+ save();
+ renderFood();
+ return;
+ }
+
+ if(
+ !preferences26().customExcluded
+ .some(x=>
+ normalize26(x)===normalize26(name)
+ )
+ ){
+ preferences26().customExcluded.push(name);
+ }
+
+ custom.value="";
+
+ save();
+ renderCustom();
+
+ alert(
+ "Alimento anotado. No existe en el catálogo actual. Si se añade al catálogo en el futuro, será necesario asociarlo a su ingrediente."
+ );
+ }));
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Las restricciones filtran los ingredientes identificados en el catálogo. Revisa siempre etiquetas, condimentos y posibles trazas si tienes alergias."
+ ));
+
+ c.appendChild(button(
+ "Generar nuevo menú semanal",
+ generateWeek26
+ ));
+
+ section.appendChild(c);
+}
+
+renderSettings=function(){
+ originalRenderSettings26();
+ renderFoodGroups26();
+};
+
+renderMenu=function(){
+ originalRenderMenu26();
+
+ const data=daily();
+
+ const planned={
+ protein:0,carbs:0,fat:0,kcal:0
+ };
+
+ const consumed={
+ protein:0,carbs:0,fat:0,kcal:0
+ };
+
+ for(let i=0;i<4;i++){
+ const meal=meals25[
+ selectedMeal(foodDate,i)
+ ];
+
+ const m=macros26(meal);
+
+ Object.keys(planned).forEach(k=>{
+ planned[k]+=m[k];
+
+ if(data.done[i]){
+ consumed[k]+=m[k];
+ }
+ });
+ }
+
+ const c=card("Mis macronutrientes");
+
+ c.append(
+ el("p","",
+ "Menú previsto: "+
+ Math.round(planned.kcal)+" kcal"),
+
+ el("p","fit-food-note",
+ formatMacros26(planned)),
+
+ el("p","",
+ "Comidas registradas: "+
+ Math.round(consumed.kcal)+" kcal"),
+
+ el("p","fit-food-note",
+ formatMacros26(consumed)),
+
+ el("small","",
+ "Referencia inicial: 120 g de proteína, 169 g de carbohidratos y 55 g de grasa. Valores aproximados."),
+
+ button(
+ "Generar nuevo menú semanal",
+ generateWeek26,
+ true
+ )
+ );
+
+ const banner=section.querySelector(
+ ".fit-food-banner"
+ );
+
+ const tabs=section.querySelector(
+ ".fit-food-tabs"
+ );
+
+ if(tabs){
+ tabs.after(c);
+ }else if(banner){
+ banner.after(c);
+ }
+};
+
+preferences26();
+freezeCompleted26();
+save();
+
+/* FIN DE ACTUALIZACION 2.6 */
+
 nutrition();
 save();
 
