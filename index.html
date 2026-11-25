@@ -990,3 +990,515 @@ renderWorkout();
 })();
 </script>
 <!-- FIN DE ACTUALIZACION 2.0 -->
+
+<!-- MI FIT 45 - ACTUALIZACION 2.1 -->
+<style>
+.fit-dashboard{
+ background:white;
+ border-radius:20px;
+ padding:18px;
+ margin-bottom:16px;
+}
+.fit-stats{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:8px;
+ margin:16px 0;
+}
+.fit-stat{
+ background:#f3edf6;
+ padding:12px 8px;
+ border-radius:12px;
+ text-align:center;
+}
+.fit-stat strong{
+ display:block;
+ font-size:24px;
+ color:#735482;
+ margin-bottom:5px;
+}
+.fit-stat small{
+ font-size:11px;
+}
+.fit-calendar{
+ display:grid;
+ grid-template-columns:repeat(7,minmax(0,1fr));
+ gap:5px;
+ margin:12px 0;
+}
+.fit-calendar-header{
+ text-align:center;
+ font-size:12px;
+ color:#807587;
+ padding:8px 0;
+}
+.fit-calendar button{
+ padding:5px 2px;
+ min-width:0;
+ aspect-ratio:1;
+ border-radius:9px;
+ background:#f1edf3;
+ color:#735482;
+ font-size:13px;
+}
+.fit-calendar button.finished{
+ background:#50866b;
+ color:white;
+}
+.fit-calendar button.selected{
+ outline:2px solid #735482;
+ outline-offset:1px;
+}
+.fit-calendar button.optional{
+ background:#f8f6fa;
+ color:#999;
+}
+.fit-calendar button.finished.optional{
+ background:#50866b;
+ color:white;
+}
+.fit-calendar button.partial{
+ background:#e6d6ed;
+ color:#483353;
+}
+.fit-legend{
+ display:flex;
+ gap:12px;
+ flex-wrap:wrap;
+ font-size:11px;
+ margin:12px 0;
+}
+.fit-dot{
+ display:inline-block;
+ width:10px;
+ height:10px;
+ border-radius:3px;
+ margin-right:4px;
+}
+.fit-tabs{
+ display:flex;
+ gap:5px;
+ background:#f1edf3;
+ padding:5px;
+ border-radius:12px;
+ margin:14px 0;
+}
+.fit-tabs button{
+ flex:1;
+ padding:10px 3px;
+ font-size:13px;
+ background:transparent;
+ color:#735482;
+}
+.fit-tabs button.active{
+ background:white;
+ box-shadow:0 1px 5px #00000012;
+}
+.fit-chart-value{
+ font-size:30px;
+ color:#735482;
+ font-weight:bold;
+ margin:12px 0 4px;
+}
+.fit-chart-change{
+ font-size:13px;
+ color:#736b79;
+ margin-bottom:12px;
+}
+.fit-chart-empty{
+ background:#f8f5fa;
+ padding:24px 12px;
+ text-align:center;
+ color:#807587;
+ border-radius:12px;
+}
+.fit-chart-svg{
+ width:100%;
+ height:auto;
+ display:block;
+}
+.fit-week-label{
+ font-size:12px;
+ color:#735482;
+ margin-top:14px;
+ font-weight:bold;
+}
+</style>
+
+<script>
+(function(){
+"use strict";
+
+const previousProgress=renderProgress;
+const previousWorkout=renderWorkout;
+let selectedMetric="weight";
+
+const version=document.querySelector(".fit-version");
+if(version)version.textContent="Version 2.1";
+
+const metrics={
+ weight:{label:"Peso",unit:"kg"},
+ waist:{label:"Cintura",unit:"cm"},
+ hip:{label:"Cadera",unit:"cm"}
+};
+
+function createElement(tag,cls,content){
+ const el=document.createElement(tag);
+ if(cls)el.className=cls;
+ if(content!==undefined)el.textContent=content;
+ return el;
+}
+
+function createDashboard(){
+ let dashboard=document.getElementById("fitDashboard21");
+
+ if(!dashboard){
+ dashboard=createElement("div","fit-dashboard");
+ dashboard.id="fitDashboard21";
+ document.getElementById("progreso").prepend(dashboard);
+ }
+
+ dashboard.replaceChildren();
+
+ dashboard.append(
+ createElement("h2","","Mi evolución"),
+ createElement("small","","Programa de cuatro semanas")
+ );
+
+ const finished=new Set(
+ state.history.map(s=>s.key)
+ );
+
+ let mainFinished=0;
+ let optionalFinished=0;
+
+ for(let w=1;w<=4;w++){
+ for(let d=0;d<6;d++){
+ if(finished.has(w+"-"+d)){
+ if(d<5)mainFinished++;
+ else optionalFinished++;
+ }
+ }
+ }
+
+ const stats=createElement("div","fit-stats");
+
+ [
+ [mainFinished+"/20","Entrenamientos"],
+ [Math.round(mainFinished/20*100)+"%","Programa completado"],
+ [state.week+"/4","Semana seleccionada"]
+ ].forEach(item=>{
+ const card=createElement("div","fit-stat");
+ card.append(
+ createElement("strong","",item[0]),
+ createElement("small","",item[1])
+ );
+ stats.appendChild(card);
+ });
+
+ dashboard.appendChild(stats);
+
+ if(optionalFinished){
+ dashboard.appendChild(
+ createElement("small","",
+ "Sesiones opcionales completadas: "+optionalFinished)
+ );
+ }
+
+ dashboard.appendChild(
+ createElement("h3","","Mi calendario")
+ );
+
+ for(let week=1;week<=4;week++){
+ dashboard.appendChild(
+ createElement("div","fit-week-label","Semana "+week)
+ );
+
+ const calendar=createElement("div","fit-calendar");
+
+ ["L","M","M","J","V","S","D"].forEach(day=>{
+ calendar.appendChild(
+ createElement("span","fit-calendar-header",day)
+ );
+ });
+
+ for(let day=0;day<7;day++){
+ const recordKey=week+"-"+day;
+ const button=createElement("button","",days[day].slice(0,3));
+ button.type="button";
+
+ if(day>=5)button.classList.add("optional");
+
+ if(finished.has(recordKey)){
+ button.classList.add("finished");
+ }else if(
+ Object.values(state.records[recordKey]||{})
+ .some(r=>r.done||(r.series||[]).some(s=>s.done))
+ ){
+ button.classList.add("partial");
+ }
+
+ if(state.week===week&&state.day===day){
+ button.classList.add("selected");
+ }
+
+ button.title="Semana "+week+" - "+days[day];
+ button.setAttribute("aria-label",button.title);
+
+ button.onclick=()=>{
+ state.week=week;
+ state.day=day;
+ save();
+ renderWorkout();
+ showPage("inicio");
+ };
+
+ calendar.appendChild(button);
+ }
+
+ dashboard.appendChild(calendar);
+ }
+
+ const legend=createElement("div","fit-legend");
+
+ [
+ ["#50866b","Completado"],
+ ["#e6d6ed","En proceso"],
+ ["#f1edf3","Pendiente"],
+ ["#f8f6fa","Opcional o descanso"]
+ ].forEach(item=>{
+ const label=createElement("span");
+ const dot=createElement("span","fit-dot");
+ dot.style.background=item[0];
+ dot.style.border="1px solid #ddd";
+ label.append(dot,document.createTextNode(item[1]));
+ legend.appendChild(label);
+ });
+
+ dashboard.appendChild(legend);
+
+ dashboard.appendChild(
+ createElement("h3","","Mis medidas")
+ );
+
+ const tabs=createElement("div","fit-tabs");
+
+ Object.keys(metrics).forEach(metric=>{
+ const button=createElement(
+ "button",
+ selectedMetric===metric?"active":"",
+ metrics[metric].label
+ );
+
+ button.type="button";
+ button.onclick=()=>{
+ selectedMetric=metric;
+ createDashboard();
+ };
+
+ tabs.appendChild(button);
+ });
+
+ dashboard.appendChild(tabs);
+
+ const chart=createElement("div");
+ chart.id="fitMeasureChart";
+ dashboard.appendChild(chart);
+
+ renderMeasurementChart(chart);
+
+ const oldCounter=document.getElementById("totalSessions");
+ if(oldCounter){
+ const card=oldCounter.closest(".card");
+ if(card)card.style.display="none";
+ }
+}
+
+function svgElement(tag,attrs,text){
+ const node=document.createElementNS(
+ "http://www.w3.org/2000/svg",tag
+ );
+ Object.entries(attrs||{}).forEach(([k,v])=>{
+ node.setAttribute(k,String(v));
+ });
+ if(text!==undefined)node.textContent=text;
+ return node;
+}
+
+function renderMeasurementChart(container){
+ const metric=metrics[selectedMetric];
+
+ const records=state.measurements
+ .filter(r=>
+ r[selectedMetric]!==""&&
+ r[selectedMetric]!==null&&
+ r[selectedMetric]!==undefined&&
+ Number.isFinite(Number(r[selectedMetric]))&&
+ Number(r[selectedMetric])>0&&
+ Number.isFinite(new Date(r.date).getTime())
+ )
+ .map(r=>({
+ date:new Date(r.date),
+ value:Number(r[selectedMetric])
+ }))
+ .sort((a,b)=>a.date-b.date);
+
+ if(!records.length){
+ container.appendChild(
+ createElement("div","fit-chart-empty",
+ "Registra tu "+metric.label.toLowerCase()+
+ " en esta pantalla para comenzar tu gráfica.")
+ );
+ return;
+ }
+
+ const first=records[0].value;
+ const last=records[records.length-1].value;
+ const difference=last-first;
+
+ container.append(
+ createElement("div","fit-chart-value",
+ last.toFixed(1)+" "+metric.unit),
+ createElement("div","fit-chart-change",
+ records.length===1?
+ "Tu primer registro":
+ "Cambio desde el primer registro: "+
+ (difference>0?"+":"")+
+ difference.toFixed(1)+" "+metric.unit)
+ );
+
+ const data=records.slice(-30);
+
+ const width=340;
+ const height=200;
+ const left=43;
+ const right=16;
+ const top=18;
+ const bottom=36;
+
+ const values=data.map(r=>r.value);
+ let min=Math.min(...values);
+ let max=Math.max(...values);
+
+ const padding=Math.max((max-min)*0.15,0.5);
+
+ min-=padding;
+ max+=padding;
+
+ const svg=svgElement("svg",{
+ viewBox:"0 0 "+width+" "+height,
+ class:"fit-chart-svg",
+ role:"img",
+ "aria-label":"Gráfica de "+metric.label
+ });
+
+ const plotWidth=width-left-right;
+ const plotHeight=height-top-bottom;
+
+ const firstTime=data[0].date.getTime();
+ const lastTime=data[data.length-1].date.getTime();
+
+ const getX=date=>
+ lastTime===firstTime?
+ left+plotWidth/2:
+ left+(date.getTime()-firstTime)/
+ (lastTime-firstTime)*plotWidth;
+
+ const getY=value=>
+ top+(max-value)/(max-min)*plotHeight;
+
+ for(let i=0;i<5;i++){
+ const value=max-(max-min)*i/4;
+ const y=getY(value);
+
+ svg.appendChild(svgElement("line",{
+ x1:left,y1:y,
+ x2:width-right,y2:y,
+ stroke:"#e9e3ed",
+ "stroke-width":1
+ }));
+
+ svg.appendChild(svgElement("text",{
+ x:left-6,y:y+4,
+ "text-anchor":"end",
+ "font-size":10,
+ fill:"#807587"
+ },value.toFixed(1)));
+ }
+
+ const points=data.map(r=>
+ getX(r.date)+","+getY(r.value)
+ ).join(" ");
+
+ if(data.length>1){
+ svg.appendChild(svgElement("polyline",{
+ points:points,
+ fill:"none",
+ stroke:"#735482",
+ "stroke-width":3,
+ "stroke-linecap":"round",
+ "stroke-linejoin":"round"
+ }));
+ }
+
+ data.forEach(r=>{
+ const point=svgElement("circle",{
+ cx:getX(r.date),
+ cy:getY(r.value),
+ r:4,
+ fill:"#735482",
+ stroke:"white",
+ "stroke-width":1.5
+ });
+
+ point.appendChild(svgElement("title",{},
+ r.date.toLocaleDateString("es-MX")+" - "+
+ r.value+" "+metric.unit));
+
+ svg.appendChild(point);
+ });
+
+ const labelIndexes=[
+ ...new Set([0,Math.floor((data.length-1)/2),data.length-1])
+ ];
+
+ labelIndexes.forEach(index=>{
+ const r=data[index];
+
+ svg.appendChild(svgElement("text",{
+ x:getX(r.date),
+ y:height-12,
+ "font-size":10,
+ "text-anchor":
+ data.length===1?"middle":
+ index===0?"start":
+ index===data.length-1?"end":"middle",
+ fill:"#807587"
+ },r.date.toLocaleDateString("es-MX",{
+ day:"numeric",month:"short"
+ })));
+ });
+
+ container.appendChild(svg);
+
+ container.appendChild(
+ createElement("small","",
+ "Registros disponibles: "+records.length+
+ ". La gráfica muestra hasta los últimos 30.")
+ );
+}
+
+renderProgress=function(){
+ previousProgress();
+ createDashboard();
+};
+
+renderWorkout=function(){
+ previousWorkout();
+};
+
+renderProgress();
+
+})();
+</script>
+<!-- FIN DE ACTUALIZACION 2.1 -->
