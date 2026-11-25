@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#633d70">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi Fit 45">
+<title>Mi Fit 45</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f7f4f8;color:#302a34;font-family:Arial,sans-serif}
+header{background:#633d70;color:white;padding:25px 20px}
+header h1{margin:0;font-size:30px}
+header p{margin:8px 0 0;color:#e9dced}
+main{max-width:760px;margin:auto;padding:16px 16px 100px}
+nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:white;color:#633d70;font-size:12px;padding:15px 3px;border:0}
+.card{background:white;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px #00000008}
+h2{font-size:22px;margin:0 0 14px}
+h3{font-size:17px;margin:0 0 8px}
+p{line-height:1.5}
+small{color:#736b79}
+button,.btn{border:0;border-radius:10px;padding:12px 16px;background:#633d70;color:white;font-size:14px;cursor:pointer}
+.secondary{background:#eee7f1;color:#633d70}
+input,select{width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;font-size:16px;background:white;margin:5px 0 12px}
+input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:#633d70}
+label{font-size:13px}
+.flex{display:flex;gap:12px;align-items:center}
+.flex>*{flex:1}
+.exercise{border-bottom:1px solid #eee;padding:18px 0}
+.exercise:last-child{border:0}
+.exercise a{color:#633d70;font-size:14px}
+.progress{height:10px;background:#eee;border-radius:10px;overflow:hidden;margin:12px 0}
+.progress div{height:100%;background:#80a993}
+#status{font-size:12px;padding:10px 16px;background:#e7f0e9;color:#35634b}
+#clock{font-size:36px;font-weight:bold;text-align:center;margin:15px}
+.hidden{display:none}
+.metric{font-size:30px;font-weight:bold;color:#633d70}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{text-align:left;padding:10px 3px;border-bottom:1px solid #eee}
+</style>
+</head>
+<body>
+<header>
+<h1>Mi Fit 45</h1>
+<p>Mi entrenamiento, mi progreso, mi bienestar.</p>
+</header>
+<div id="status" role="status"></div>
+<main>
+<section id="inicio">
+<div class="card">
+<h2>Mi entrenamiento</h2>
+<div class="flex">
+<div>
+<label>Semana</label>
+<select id="week">
+<option value="1">Semana 1</option>
+<option value="2">Semana 2</option>
+<option value="3">Semana 3</option>
+<option value="4">Semana 4</option>
+</select>
+</div>
+<div>
+<label>Día</label>
+<select id="day">
+<option value="0">Lunes</option>
+<option value="1">Martes</option>
+<option value="2">Miércoles</option>
+<option value="3">Jueves</option>
+<option value="4">Viernes</option>
+<option value="5">Sábado</option>
+<option value="6">Domingo</option>
+</select>
+</div>
+</div>
+<h2 id="routineTitle"></h2>
+<p id="routineInfo"></p>
+<div id="counter"></div>
+<div class="progress"><div id="bar"></div></div>
+</div>
+<div class="card" id="exerciseList"></div>
+<div class="card">
+<h3>Temporizador de descanso</h3>
+<div id="clock">00:00</div>
+<div class="flex">
+<button onclick="startTimer(60)">60 s</button>
+<button onclick="startTimer(90)">90 s</button>
+<button class="secondary" onclick="stopTimer()">Detener</button>
+</div>
+</div>
+<button style="width:100%" onclick="finishWorkout()">Finalizar entrenamiento</button>
+</section>
+
+<section id="rutina" class="hidden">
+<div class="card">
+<h2>Mi programa de 4 semanas</h2>
+<div id="calendar"></div>
+</div>
+<div class="card">
+<h3>Progresión</h3>
+<p>Semana 1: familiarización y técnica.</p>
+<p>Semana 2: aumenta ligeramente las repeticiones.</p>
+<p>Semana 3: añade una serie si te recuperas bien.</p>
+<p>Semana 4: consolida la técnica y las cargas.</p>
+<p>Termina cada serie sintiendo que podrías realizar otras 2 o 3 repeticiones. Si hay dolor, detén el ejercicio.</p>
+</div>
+</section>
+
+<section id="progreso" class="hidden">
+<div class="card">
+<h2>Mi progreso</h2>
+<div class="metric" id="totalSessions">0</div>
+<small>Entrenamientos completados</small>
+</div>
+<div class="card">
+<h3>Registrar peso y medidas</h3>
+<label>Peso corporal (kg)</label>
+<input type="number" id="bodyWeight" min="1" step="0.1">
+<label>Cintura (cm)</label>
+<input type="number" id="waist" min="1" step="0.1">
+<label>Cadera (cm)</label>
+<input type="number" id="hip" min="1" step="0.1">
+<button onclick="saveMeasurements()">Guardar registro</button>
+<div id="measureHistory"></div>
+</div>
+<div class="card">
+<h3>Historial de entrenamiento</h3>
+<div id="history"></div>
+</div>
+<div class="card">
+<h3>Historial de cargas</h3>
+<div id="loadHistory"></div>
+</div>
+</section>
+
+<section id="perfil" class="hidden">
+<div class="card">
+<h2>Mi perfil</h2>
+<label>Edad</label>
+<input id="age" type="number" min="18">
+<label>Estatura (cm)</label>
+<input id="height" type="number">
+<label>Meta de peso (kg)</label>
+<input id="goal" type="number" step="0.1">
+<label>Horario de entrenamiento</label>
+<input id="schedule" type="time">
+<label>Mi equipo</label>
+<input id="equipment">
+<button onclick="saveProfile()">Guardar perfil</button>
+</div>
+<div class="card">
+<h3>Respaldo de mis datos</h3>
+<p>Los registros se guardan en este navegador. Exporta un respaldo antes de cambiar de dispositivo o borrar datos.</p>
+<button onclick="exportData()">Exportar respaldo</button>
+<p>Restaurar un respaldo:</p>
+<input type="file" id="backupFile" accept=".json,application/json">
+<button class="secondary" onclick="importData()">Importar respaldo</button>
+</div>
+</section>
+</main>
+
+<nav>
+<button onclick="showPage('inicio')">🏠<br>Inicio</button>
+<button onclick="showPage('rutina')">📅<br>Rutina</button>
+<button onclick="showPage('progreso')">📈<br>Progreso</button>
+<button onclick="showPage('perfil')">👤<br>Perfil</button>
+</nav>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEY = "mi_fit_45_data_v1";
+
+function defaults(){
+ return {
+ week:1,day:0,records:{},history:[],measurements:[],
+ profile:{
+ age:45,height:170,goal:60,schedule:"19:00",
+ equipment:"Mancuernas de 5 lb, ligas con agarraderas y tapete"
+ }
+ };
+}
+
+let state=defaults();
+
+function status(message,error=false){
+ $("status").textContent=message;
+ $("status").style.background=error?"#fce5e5":"#e7f0e9";
+ $("status").style.color=error?"#a12e2e":"#35634b";
+}
+
+function save(){
+ try{
+ const data=JSON.stringify(state);
+ localStorage.setItem(KEY,data);
+ if(localStorage.getItem(KEY)!==data)
+ throw new Error("No se pudo verificar");
+ status("✓ Datos guardados en este dispositivo");
+ return true;
+ }catch(error){
+ status("⚠ No se pudieron guardar los datos. Exporta un respaldo.",true);
+ return false;
+ }
+}
+
+try{
+ const stored=localStorage.getItem(KEY);
+ if(stored) state=JSON.parse(stored);
+ save();
+}catch(error){
+ status("⚠ Almacenamiento no disponible",true);
+}
+
+const exercises={
+ squat:["Sentadilla con mancuernas","12","Sostén las mancuernas a los lados. Flexiona cadera y rodillas, manteniendo los pies apoyados.","sentadilla con mancuernas tecnica"],
+ rdl:["Peso muerto rumano","12","Lleva la cadera hacia atrás con rodillas ligeramente flexionadas y espalda neutra.","peso muerto rumano mancuernas tecnica"],
+ bridge:["Puente de glúteos","15","Acostada, flexiona las rodillas y eleva la cadera sin arquear la espalda.","puente de gluteos tecnica"],
+ lunge:["Desplante hacia atrás","8 por lado","Da un paso atrás y flexiona ambas rodillas. Usa un apoyo estable si lo necesitas.","desplante hacia atras tecnica principiantes"],
+ calf:["Elevación de pantorrillas","15","Eleva los talones lentamente y baja de forma controlada.","elevacion pantorrillas de pie"],
+ row:["Remo con mancuernas","12","Inclina el torso desde la cadera y lleva los codos hacia atrás.","remo con mancuernas tecnica"],
+ curl:["Curl de bíceps","12","Mantén los codos cerca del cuerpo y flexiona los brazos lentamente.","curl biceps mancuernas tecnica"],
+ press:["Press de hombros","10","Empuja las mancuernas hacia arriba sin arquear la espalda.","press hombros mancuernas tecnica"],
+ floor:["Press de pecho en tapete","12","Acostada boca arriba, empuja las mancuernas hacia arriba y baja lentamente.","press pecho mancuernas en suelo"],
+ deadbug:["Dead bug","8 por lado","Acostada, extiende brazo y pierna contrarios sin arquear la zona lumbar.","dead bug ejercicio tecnica"],
+ bird:["Bird dog","8 por lado","En cuatro apoyos, extiende el brazo y la pierna contrarios manteniendo el equilibrio.","bird dog ejercicio tecnica"],
+ plank:["Plancha con rodillas","20 segundos","Apoya antebrazos y rodillas. Mantén el abdomen firme y respira.","plancha abdominal rodillas principiantes"],
+ side:["Elevación lateral de pierna","12 por lado","Acostada de lado, eleva la pierna superior sin girar la cadera.","elevacion lateral pierna acostada"],
+ bandcurl:["Curl de bíceps con liga","12","Pisa el centro de la liga con ambos pies, verifica que no resbale y flexiona los codos.","curl biceps banda elastica agarraderas"],
+ march:["Marcha en el sitio","5 minutos","Camina en el sitio a ritmo cómodo, sin saltar.","marcha en sitio bajo impacto"],
+ walk:["Caminata moderada","20 minutos","Camina a un ritmo que permita conversar.","caminata ejercicio moderado"],
+ mobility:["Movilidad general","5 minutos","Realiza movimientos suaves de hombros, cadera y tobillos sin dolor.","movilidad articular principiantes"]
+};
+
+const plan=[
+ ["Piernas y glúteos","45 minutos",["squat","rdl","bridge","lunge","calf"]],
+ ["Espalda, brazos y abdomen","45 minutos",["row","curl","press","deadbug","plank"]],
+ ["Cardio y movilidad","30 minutos",["march","walk","mobility"]],
+ ["Piernas y glúteos","45 minutos",["squat","bridge","rdl","side","calf"]],
+ ["Cuerpo completo y abdomen","45 minutos",["lunge","row","floor","bandcurl","bird","plank"]],
+ ["Actividad opcional","20–30 minutos",["walk","mobility"]],
+ ["Descanso","Recuperación",[]]
+];
+
+const days=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+
+function key(){
+ return state.week+"-"+state.day;
+}
+
+function current(){
+ if(!state.records[key()]) state.records[key()]={};
+ return state.records[key()];
+}
+
+function repetitions(id){
+ const original=exercises[id][1];
+ if(/^\d+$/.test(original)){
+ return Number(original)+(state.week===2?2:0);
+ }
+ return original;
+}
+
+function sets(id){
+ if(["march","walk","mobility"].includes(id)) return 1;
+ return state.week>=3?3:2;
+}
+
+function lastWeight(id){
+ const previous=state.history.slice().reverse();
+ for(const session of previous){
+ if(session.details && session.details[id] &&
+ session.details[id].weight!=="")
+ return session.details[id].weight;
+ }
+ return "";
+}
+
+function renderWorkout(){
+ $("week").value=state.week;
+ $("day").value=state.day;
+ const routine=plan[state.day];
+ $("routineTitle").textContent=routine[0];
+ $("routineInfo").textContent=routine[1]+
+ (routine[2].length?" · Calienta 5 minutos antes de la fuerza.":" · Disfruta tu descanso.");
+ const list=$("exerciseList");
+ list.innerHTML="";
+ const records=current();
+
+ if(!routine[2].length){
+ list.textContent="Hoy toca descansar y recuperarte.";
+ }
+
+ for(const id of routine[2]){
+ const e=exercises[id];
+ const record=records[id]||{weight:"",done:false,reps:""};
+ const section=document.createElement("div");
+ section.className="exercise";
+ section.innerHTML=`
+ <h3>${e[0]}</h3>
+ <small>${sets(id)} series × ${repetitions(id)}${/minutos|segundos/.test(e[1])?"":" repeticiones"}</small>
+ <p>${e[2]}</p>
+ <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(e[3])}" target="_blank" rel="noopener">▶ Buscar demostración en video</a>
+ <p><small>Último peso: <span class="previous"></span></small></p>
+ <div class="flex">
+ <div><label>Peso por mancuerna (lb)</label>
+ <input class="weight" type="number" min="0" step="0.5" placeholder="Opcional"></div>
+ <div><label>Reps realizadas</label>
+ <input class="reps" placeholder="Ej. 12,12"></div>
+ </div>
+ <label style="display:flex;align-items:center;gap:10px">
+ <input class="done" type="checkbox"> Ejercicio completado
+ </label>`;
+ section.querySelector(".previous").textContent=lastWeight(id)||"Sin registro";
+ const w=section.querySelector(".weight");
+ const r=section.querySelector(".reps");
+ const d=section.querySelector(".done");
+ w.value=record.weight??"";
+ r.value=record.reps??"";
+ d.checked=!!record.done;
+ function update(){
+ records[id]={weight:w.value,reps:r.value,done:d.checked};
+ save();
+ updateProgress();
+ }
+ w.addEventListener("input",update);
+ r.addEventListener("input",update);
+ d.addEventListener("change",update);
+ list.appendChild(section);
+ }
+ updateProgress();
+}
+
+function updateProgress(){
+ const ids=plan[state.day][2];
+ const count=ids.filter(id=>current()[id]?.done).length;
+ $("counter").textContent=count+" de "+ids.length+" ejercicios completados";
+ $("bar").style.width=(ids.length?100*count/ids.length:0)+"%";
+}
+
+$("week").onchange=()=>{
+ state.week=Number($("week").value);
+ save();renderWorkout();
+};
+$("day").onchange=()=>{
+ state.day=Number($("day").value);
+ save();renderWorkout();
+};
+
+function finishWorkout(){
+ const ids=plan[state.day][2];
+ if(!ids.length){alert("Hoy es día de descanso.");return;}
+ if(!ids.every(id=>current()[id]?.done)){
+ alert("Marca todos los ejercicios que hayas completado antes de finalizar la rutina.");
+ return;
+ }
+ const session={
+ key:key(),week:state.week,day:state.day,
+ date:new Date().toISOString(),
+ title:plan[state.day][0],
+ details:JSON.parse(JSON.stringify(current()))
+ };
+ const existing=state.history.findIndex(s=>s.key===key());
+ if(existing>=0) state.history[existing]=session;
+ else state.history.push(session);
+ if(save()) alert("¡Entrenamiento guardado!");
+ renderProgress();
+}
+
+function showPage(id){
+ for(const page of ["inicio","rutina","progreso","perfil"])
+ $(page).classList.toggle("hidden",page!==id);
+ if(id==="progreso") renderProgress();
+ if(id==="perfil") renderProfile();
+ window.scrollTo(0,0);
+}
+
+function renderCalendar(){
+ const c=$("calendar");
+ c.innerHTML="";
+ plan.forEach((r,i)=>{
+ const div=document.createElement("div");
+ div.className="exercise";
+ const h=document.createElement("h3");
+ h.textContent=days[i]+" · "+r[0];
+ const b=document.createElement("button");
+ b.className="secondary";
+ b.textContent="Ver entrenamiento";
+ b.onclick=()=>{
+ state.day=i;save();renderWorkout();showPage("inicio");
+ };
+ div.append(h,b);
+ c.appendChild(div);
+ });
+}
+
+function renderProgress(){
+ $("totalSessions").textContent=state.history.length;
+ const h=$("history");
+ h.innerHTML="";
+ if(!state.history.length)
+ h.textContent="Todavía no hay entrenamientos registrados.";
+ state.history.slice().reverse().forEach(s=>{
+ const p=document.createElement("p");
+ p.textContent=new Date(s.date).toLocaleDateString("es-MX")+
+ " · Semana "+s.week+" · "+days[s.day]+" · "+s.title;
+ h.appendChild(p);
+ });
+
+ const m=$("measureHistory");
+ m.innerHTML="";
+ state.measurements.slice().reverse().forEach(x=>{
+ const p=document.createElement("p");
+ p.textContent=new Date(x.date).toLocaleDateString("es-MX")+
+ " · "+(x.weight||"—")+" kg · Cintura: "+(x.waist||"—")+
+ " cm · Cadera: "+(x.hip||"—")+" cm";
+ m.appendChild(p);
+ });
+
+ const l=$("loadHistory");
+ l.innerHTML="";
+ state.history.slice().reverse().forEach(s=>{
+ Object.entries(s.details||{}).forEach(([id,v])=>{
+ if(v.weight!=="" && exercises[id]){
+ const p=document.createElement("p");
+ p.textContent="Sem. "+s.week+" · "+exercises[id][0]+
+ " · "+v.weight+" lb · Reps: "+(v.reps||"—");
+ l.appendChild(p);
+ }
+ });
+ });
+}
+
+function saveMeasurements(){
+ const weight=$("bodyWeight").value;
+ const waist=$("waist").value;
+ const hip=$("hip").value;
+ if(!weight&&!waist&&!hip){
+ alert("Introduce al menos una medida.");return;
+ }
+ if([weight,waist,hip].some(v=>v!==""&&Number(v)<=0)){
+ alert("Utiliza valores positivos.");return;
+ }
+ state.measurements.push({date:new Date().toISOString(),weight,waist,hip});
+ if(save()) alert("Registro guardado");
+ $("bodyWeight").value="";
+ $("waist").value="";
+ $("hip").value="";
+ renderProgress();
+}
+
+function renderProfile(){
+ Object.keys(state.profile).forEach(k=>{
+ if($(k)) $(k).value=state.profile[k];
+ });
+}
+
+function saveProfile(){
+ Object.keys(state.profile).forEach(k=>{
+ if($(k)) state.profile[k]=$(k).value;
+ });
+ if(save()) alert("Perfil guardado");
+}
+
+let timer=null;
+function startTimer(seconds){
+ stopTimer();
+ const end=Date.now()+seconds*1000;
+ function tick(){
+ const left=Math.max(0,Math.ceil((end-Date.now())/1000));
+ $("clock").textContent=
+ String(Math.floor(left/60)).padStart(2,"0")+":"+
+ String(left%60).padStart(2,"0");
+ if(left===0){
+ clearInterval(timer);timer=null;
+ $("clock").textContent="¡Lista!";
+ }
+ }
+ tick();timer=setInterval(tick,200);
+}
+
+function stopTimer(){
+ clearInterval(timer);
+ timer=null;
+ $("clock").textContent="00:00";
+}
+
+function exportData(){
+ const blob=new Blob([JSON.stringify(state,null,2)],
+ {type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download="mi-fit-45-respaldo.json";
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+async function importData(){
+ const file=$("backupFile").files[0];
+ if(!file){alert("Selecciona un archivo de respaldo.");return;}
+ try{
+ const data=JSON.parse(await file.text());
+ if(!data.records||!data.profile||
+ !Array.isArray(data.history)||
+ !Array.isArray(data.measurements)||
+ !Number.isInteger(data.week)||data.week<1||data.week>4||
+ !Number.isInteger(data.day)||data.day<0||data.day>6)
+ throw new Error("Formato incorrecto");
+ if(!confirm("¿Reemplazar los registros actuales con el respaldo?"))return;
+ state=data;
+ save();renderWorkout();renderProgress();renderProfile();
+ }catch(error){alert("El archivo no es un respaldo válido.");}
+}
+
+renderWorkout();
+renderCalendar();
+renderProfile();
+renderProgress();
+</script>
+</body>
+</html>
