@@ -1989,3 +1989,584 @@ renderProfile();
 })();
 </script>
 <!-- FIN DE ACTUALIZACION 2.2 --> 
+
+<!-- MI FIT 45 - ACTUALIZACION 2.3 -->
+<style>
+.fit-library{
+ background:#fff;
+ border-radius:20px;
+ padding:18px;
+ margin-bottom:16px;
+}
+.fit-library-item{
+ padding:18px 0;
+ border-bottom:1px solid #eee;
+}
+.fit-library-item:last-child{
+ border-bottom:0;
+}
+.fit-library-item h3{
+ color:#483353;
+}
+.fit-library-actions{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ margin:12px 0;
+}
+.fit-library-actions button{
+ flex:1;
+}
+.fit-library-credit{
+ font-size:12px;
+ color:#807587;
+ margin:10px 0;
+}
+.fit-library-search{
+ margin:12px 0;
+}
+.fit-library-player{
+ aspect-ratio:16/9;
+ background:#302538;
+ border-radius:14px;
+ overflow:hidden;
+ margin:12px 0;
+}
+.fit-library-player iframe{
+ border:0;
+ width:100%;
+ height:100%;
+}
+.fit-library-player button{
+ width:100%;
+ height:100%;
+ border-radius:0;
+ background:#483353;
+}
+.fit-library-editor{
+ background:#f3edf6;
+ border-radius:12px;
+ padding:12px;
+ margin:12px 0;
+}
+.fit-library-link{
+ display:inline-block;
+ color:#735482;
+ font-size:13px;
+ margin:6px 0;
+}
+.fit-library-note{
+ background:#f7f4fa;
+ padding:12px;
+ border-radius:12px;
+ font-size:13px;
+ line-height:1.6;
+}
+</style>
+
+<script>
+(function(){
+"use strict";
+
+const previousWorkout23=renderWorkout;
+const previousShowPage23=showPage;
+
+const version=document.querySelector(".fit-version");
+if(version)version.textContent="Version 2.3";
+
+const defaultVideos23={
+ rdl:{
+  id:"D2Ac4HyXsB8",
+  author:"Priscilla BC",
+  title:"Peso muerto rumano con mancuernas"
+ },
+ bridge:{
+  id:"qOX9bD9Evn4",
+  author:"Priscilla BC",
+  title:"Puente de glúteos con mancuernas"
+ }
+};
+
+const complementary23=[
+ {
+  id:"D2jaJpE5HHM",
+  author:"Priscilla BC",
+  title:"Glúteos perfectos",
+  note:"Material complementario. Algunos ejercicios requieren equipo diferente al de tu rutina."
+ }
+];
+
+function node(tag,cls,value){
+ const e=document.createElement(tag);
+ if(cls)e.className=cls;
+ if(value!==undefined)e.textContent=value;
+ return e;
+}
+
+function savedVideos(){
+ if(!state.customVideos||
+ typeof state.customVideos!=="object"){
+ state.customVideos={};
+ }
+ return state.customVideos;
+}
+
+function selectedVideo(id){
+ return savedVideos()[id]||
+ defaultVideos23[id]||null;
+}
+
+function youtubeId(value){
+ const text=String(value||"").trim();
+
+ if(/^[A-Za-z0-9_-]{11}$/.test(text)){
+ return text;
+ }
+
+ try{
+ const url=new URL(text);
+ const host=url.hostname.toLowerCase();
+
+ if(!["https:","http:"].includes(url.protocol)){
+ return null;
+ }
+
+ let id=null;
+
+ if(host==="youtu.be"){
+ id=url.pathname.split("/")[1];
+ }else if([
+ "youtube.com",
+ "www.youtube.com",
+ "m.youtube.com",
+ "www.youtube-nocookie.com"
+ ].includes(host)){
+ id=url.searchParams.get("v");
+
+ if(!id){
+ const parts=url.pathname.split("/");
+ if(["shorts","embed","live"].includes(parts[1])){
+ id=parts[2];
+ }
+ }
+ }
+
+ return /^[A-Za-z0-9_-]{11}$/.test(id||"")?
+ id:null;
+
+ }catch(error){
+ return null;
+ }
+}
+
+function makeLink(text,url){
+ const a=node("a","fit-library-link",text);
+ a.href=url;
+ a.target="_blank";
+ a.rel="noopener noreferrer";
+ return a;
+}
+
+function searchLink(id,priscilla){
+ const query=(priscilla?"Priscilla BC ":"")+
+ exercises[id][3];
+
+ return "https://www.youtube.com/results?search_query="+
+ encodeURIComponent(query);
+}
+
+function makePlayer(video){
+ const container=node("div","fit-library-player");
+
+ const button=node(
+ "button","",
+ "▶ Ver demostración"
+ );
+
+ button.type="button";
+
+ button.onclick=()=>{
+ const frame=document.createElement("iframe");
+
+ frame.src=
+ "https://www.youtube-nocookie.com/embed/"+
+ video.id+"?autoplay=1&playsinline=1";
+
+ frame.title=video.title||"Demostración";
+ frame.allow=
+ "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture";
+
+ frame.allowFullscreen=true;
+
+ container.replaceChildren(frame);
+ };
+
+ container.appendChild(button);
+ return container;
+}
+
+function makeVideoBlock(video){
+ const div=node("div");
+
+ div.append(
+ makePlayer(video),
+ node(
+ "div","fit-library-credit",
+ video.title+" · "+video.author
+ ),
+ makeLink(
+ "Abrir video original en YouTube",
+ "https://www.youtube.com/watch?v="+video.id
+ )
+ );
+
+ return div;
+}
+
+function makeEditor(id,onSaved){
+ const editor=node("div","fit-library-editor");
+
+ editor.appendChild(node(
+ "h3","","Guardar mi video favorito"
+ ));
+
+ editor.appendChild(node(
+ "small","",
+ "Utiliza únicamente enlaces a videos públicos."
+ ));
+
+ const url=node("input");
+ url.type="url";
+ url.placeholder="Enlace de YouTube";
+
+ const author=node("input");
+ author.placeholder="Autora, autor o canal";
+ author.maxLength=100;
+
+ const title=node("input");
+ title.placeholder="Título del video";
+ title.maxLength=150;
+
+ const existing=selectedVideo(id);
+
+ if(existing){
+ url.value=
+ "https://www.youtube.com/watch?v="+existing.id;
+ author.value=existing.author||"";
+ title.value=existing.title||"";
+ }
+
+ const saveButton=node("button","","Guardar video");
+ saveButton.type="button";
+
+ saveButton.onclick=()=>{
+ const validId=youtubeId(url.value);
+
+ if(!validId){
+ alert("Introduce un enlace válido de YouTube.");
+ return;
+ }
+
+ if(!author.value.trim()){
+ alert("Escribe el nombre del canal o autor.");
+ return;
+ }
+
+ savedVideos()[id]={
+ id:validId,
+ author:author.value.trim(),
+ title:title.value.trim()||exercises[id][0]
+ };
+
+ if(save()){
+ onSaved();
+ }
+ };
+
+ const reset=node(
+ "button","secondary",
+ "Restaurar video original"
+ );
+ reset.type="button";
+
+ reset.onclick=()=>{
+ delete savedVideos()[id];
+ save();
+ onSaved();
+ };
+
+ const actions=node("div","fit-library-actions");
+ actions.append(saveButton,reset);
+
+ editor.append(url,author,title,actions);
+
+ return editor;
+}
+
+function exerciseVideo(section,id){
+ const originalVideo=section.querySelector(".fit-video");
+
+ if(originalVideo){
+ const credit=originalVideo.nextElementSibling;
+
+ if(credit&&credit.textContent.includes(
+ "Video publico original"
+ )){
+ credit.remove();
+ }
+
+ originalVideo.remove();
+ }
+
+ const oldLink=section.querySelector("a");
+
+ if(oldLink)oldLink.remove();
+
+ const block=node("div","fit-exercise-video23");
+ const video=selectedVideo(id);
+
+ if(video){
+ block.appendChild(makeVideoBlock(video));
+ }else{
+ block.appendChild(node(
+ "p","fit-library-note",
+ "Todavía no hay un video específico seleccionado para este ejercicio."
+ ));
+
+ block.appendChild(makeLink(
+ "Buscar demostración de Priscilla BC",
+ searchLink(id,true)
+ ));
+
+ block.appendChild(document.createElement("br"));
+
+ block.appendChild(makeLink(
+ "Buscar otras demostraciones",
+ searchLink(id,false)
+ ));
+ }
+
+ const edit=node(
+ "button","secondary",
+ "Cambiar video"
+ );
+
+ edit.type="button";
+
+ const actions=node("div","fit-library-actions");
+ actions.appendChild(edit);
+
+ block.appendChild(actions);
+
+ edit.onclick=()=>{
+ const currentEditor=block.querySelector(
+ ".fit-library-editor"
+ );
+
+ if(currentEditor){
+ currentEditor.remove();
+ return;
+ }
+
+ block.appendChild(makeEditor(id,()=>{
+ renderWorkout();
+ }));
+ };
+
+ const description=section.querySelector("p");
+
+ if(description){
+ description.after(block);
+ }else{
+ section.appendChild(block);
+ }
+}
+
+function renderLibrary(){
+ const section=document.getElementById("videos23");
+
+ section.replaceChildren();
+
+ const intro=node("div","fit-library");
+
+ intro.append(
+ node("h2","","Biblioteca de ejercicios"),
+ node("p","","Consulta las demostraciones de tu programa y guarda tus videos favoritos."),
+ node("p","fit-library-note",
+ "Preferimos contenido público de Priscilla BC. Mi Fit 45 no está afiliada a ella. Los videos pertenecen a sus respectivos autores y se reproducen mediante YouTube.")
+ );
+
+ const total=Object.keys(exercises).length;
+
+ const available=Object.keys(exercises)
+ .filter(id=>selectedVideo(id)).length;
+
+ intro.appendChild(node(
+ "h3","",
+ available+" de "+total+" videos seleccionados"
+ ));
+
+ const search=node("input","fit-library-search");
+ search.placeholder="Buscar ejercicio...";
+ search.type="search";
+
+ intro.appendChild(search);
+
+ const list=node("div");
+
+ function draw(){
+ list.replaceChildren();
+
+ const filter=search.value.trim().toLowerCase();
+
+ Object.keys(exercises).forEach(id=>{
+ const name=exercises[id][0];
+
+ if(!name.toLowerCase().includes(filter)){
+ return;
+ }
+
+ const item=node("div","fit-library-item");
+
+ item.appendChild(node("h3","",name));
+
+ const video=selectedVideo(id);
+
+ if(video){
+ item.appendChild(makeVideoBlock(video));
+ }else{
+ item.appendChild(node(
+ "small","",
+ "Sin video específico seleccionado"
+ ));
+
+ item.appendChild(document.createElement("br"));
+
+ item.appendChild(makeLink(
+ "Buscar con Priscilla BC",
+ searchLink(id,true)
+ ));
+
+ item.appendChild(document.createElement("br"));
+
+ item.appendChild(makeLink(
+ "Buscar otros canales",
+ searchLink(id,false)
+ ));
+ }
+
+ const actions=node("div","fit-library-actions");
+
+ const edit=node("button","secondary",
+ video?"Cambiar video":"Agregar video"
+ );
+
+ edit.type="button";
+
+ edit.onclick=()=>{
+ const old=item.querySelector(".fit-library-editor");
+
+ if(old){
+ old.remove();
+ return;
+ }
+
+ item.appendChild(makeEditor(id,()=>{
+ renderLibrary();
+ renderWorkout();
+ }));
+ };
+
+ actions.appendChild(edit);
+ item.appendChild(actions);
+ list.appendChild(item);
+ });
+ }
+
+ search.oninput=draw;
+
+ intro.appendChild(list);
+
+ section.appendChild(intro);
+
+ const extra=node("div","fit-library");
+
+ extra.appendChild(node(
+ "h2","","Material complementario"
+ ));
+
+ complementary23.forEach(video=>{
+ extra.append(
+ node("h3","",video.title),
+ makeVideoBlock(video),
+ node("p","fit-library-note",video.note)
+ );
+ });
+
+ section.appendChild(extra);
+
+ draw();
+}
+
+const librarySection=document.createElement("section");
+librarySection.id="videos23";
+librarySection.className="hidden";
+
+document.querySelector("main")
+.appendChild(librarySection);
+
+const libraryButton=document.createElement("button");
+
+libraryButton.type="button";
+libraryButton.innerHTML="▶<br>Videos";
+
+libraryButton.onclick=()=>{
+ showPage("videos23");
+};
+
+const nav=document.querySelector("nav");
+
+nav.insertBefore(
+ libraryButton,
+ nav.lastElementChild
+);
+
+showPage=function(id){
+ if(id==="videos23"){
+ ["inicio","rutina","progreso","perfil"]
+ .forEach(page=>{
+ document.getElementById(page)
+ .classList.add("hidden");
+ });
+
+ librarySection.classList.remove("hidden");
+
+ renderLibrary();
+ window.scrollTo(0,0);
+ return;
+ }
+
+ librarySection.classList.add("hidden");
+ previousShowPage23(id);
+};
+
+renderWorkout=function(){
+ previousWorkout23();
+
+ const ids=plan[state.day][2];
+
+ document.querySelectorAll(
+ "#exerciseList .exercise"
+ ).forEach((section,i)=>{
+ if(ids[i]){
+ exerciseVideo(section,ids[i]);
+ }
+ });
+};
+
+renderWorkout();
+renderLibrary();
+
+})();
+</script>
+<!-- FIN DE ACTUALIZACION 2.3 -->
