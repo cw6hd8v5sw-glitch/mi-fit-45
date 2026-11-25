@@ -3089,3 +3089,874 @@ renderProfile();
 </script>
 <!-- FIN DE ACTUALIZACION 2.4 -->
  
+
+<!-- MI FIT 45 - ACTUALIZACION 2.5 -->
+<style>
+.fit-food{
+ background:white;
+ border-radius:20px;
+ padding:18px;
+ margin-bottom:15px;
+}
+.fit-food h3{
+ color:#483353;
+ margin-top:8px;
+}
+.fit-food-banner{
+ background:linear-gradient(135deg,#483353,#876492);
+ color:white;
+ padding:22px;
+ border-radius:20px;
+ margin-bottom:15px;
+}
+.fit-food-banner small{
+ color:#eee3f2;
+}
+.fit-food-tabs{
+ display:flex;
+ gap:5px;
+ margin:15px 0;
+}
+.fit-food-tabs button{
+ flex:1;
+ padding:12px 4px;
+ font-size:12px;
+}
+.fit-food-time{
+ color:#735482;
+ font-size:12px;
+ font-weight:bold;
+}
+.fit-food-ingredient{
+ display:flex;
+ justify-content:space-between;
+ gap:12px;
+ border-bottom:1px solid #eee;
+ padding:10px 0;
+ font-size:14px;
+}
+.fit-food-actions{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ margin-top:14px;
+}
+.fit-food-actions button{
+ flex:1;
+ font-size:12px;
+}
+.fit-food-done{
+ background:#e5f1e8;
+ color:#35634b;
+ border-radius:10px;
+ padding:12px;
+ margin-top:12px;
+}
+.fit-food-check{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ margin:12px 0;
+}
+.fit-food-note{
+ background:#f3edf6;
+ padding:14px;
+ border-radius:12px;
+ font-size:13px;
+ line-height:1.6;
+}
+.fit-food-water{
+ font-size:30px;
+ font-weight:bold;
+ color:#735482;
+ text-align:center;
+ padding:15px;
+}
+.fit-food-shopping{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:12px 0;
+ border-bottom:1px solid #eee;
+}
+.fit-food-shopping input{
+ flex-shrink:0;
+}
+.fit-food-shopping.checked span{
+ text-decoration:line-through;
+ color:#999;
+}
+.fit-food-kcal{
+ display:flex;
+ justify-content:space-between;
+ margin:12px 0;
+ font-size:14px;
+}
+.fit-food-favorite{
+ color:#735482;
+ font-size:12px;
+}
+nav button{
+ min-width:0;
+ font-size:10px;
+ padding:12px 1px;
+}
+</style>
+
+<script>
+(function(){
+"use strict";
+
+const previousShowPage25=showPage;
+const version=document.querySelector(".fit-version");
+if(version)version.textContent="Version 2.5";
+
+const foods={
+ oats:["Avena","g","Alsuper",3.89],
+ milk:["Leche descremada","ml","Alsuper",0.35],
+ yogurt:["Yogur griego natural sin azúcar","g","Alsuper",0.65],
+ banana:["Plátano","g","Alsuper",0.89],
+ apple:["Manzana","g","Alsuper",0.52],
+ berries:["Fresas","g","Alsuper",0.32],
+ peanut:["Crema de cacahuate","g","Alsuper",5.88],
+ eggs:["Huevo","pzas","Alsuper",72],
+ whites:["Claras líquidas","g","Alsuper",0.52],
+ tuna:["Atún en agua drenado","g","Alsuper",1.16],
+ chicken:["Pechuga de pollo","g","Carnicería",1.65,1.33],
+ beef:["Bistec magro de res","g","Carnicería",2,1.33],
+ pork:["Lomo de cerdo","g","Carnicería",1.75,1.33],
+ ground:["Carne molida magra de res","g","Carnicería",2.15,1.33],
+ rice:["Arroz","g","Alsuper",1.30,0.34],
+ potato:["Papa","g","Alsuper",0.87,1.10],
+ sweet:["Camote","g","Alsuper",0.90,1.10],
+ tortilla:["Tortilla de maíz","g","Alsuper",2.18],
+ bread:["Pan integral","g","Alsuper",2.50],
+ beans:["Frijoles cocidos","g","Alsuper",1.27],
+ cottage:["Queso cottage","g","Alsuper",0.98],
+ avocado:["Aguacate","g","Alsuper",1.60,1.45],
+ oil:["Aceite de oliva","g","Alsuper",8.84],
+ broccoli:["Brócoli","g","Alsuper",0.35],
+ zucchini:["Calabacita","g","Alsuper",0.17],
+ carrot:["Zanahoria","g","Alsuper",0.41],
+ spinach:["Espinacas","g","Alsuper",0.23],
+ cucumber:["Pepino","g","Alsuper",0.15],
+ tomato:["Tomate","g","Alsuper",0.18],
+ nuts:["Almendras","g","Alsuper",5.79],
+ orange:["Naranja","g","Alsuper",0.47]
+};
+
+const meals25={
+ smoothie:{
+ title:"Smoothie de avena y plátano",
+ items:[["oats",40],["milk",250],["yogurt",100],
+ ["banana",60],["peanut",10]],
+ prep:"Licúa todos los ingredientes hasta obtener una consistencia cremosa. No necesitas agregar azúcar."
+ },
+ eggToast:{
+ title:"Huevo con claras y pan integral",
+ items:[["eggs",1],["whites",150],["bread",60],
+ ["avocado",35],["spinach",50],["oil",5]],
+ prep:"Cocina el huevo y las claras con espinacas. Tuesta el pan y acompaña con aguacate."
+ },
+ yogurtOats:{
+ title:"Tazón de yogur, avena y fresas",
+ items:[["yogurt",250],["oats",40],
+ ["berries",100],["peanut",10]],
+ prep:"Mezcla el yogur con avena, fresas y crema de cacahuate."
+ },
+ appleOats:{
+ title:"Avena con manzana y canela",
+ items:[["oats",40],["milk",200],
+ ["yogurt",150],["apple",100],["nuts",8]],
+ prep:"Cocina la avena con leche. Agrega manzana, canela, yogur y almendras."
+ },
+ tunaPotato:{
+ title:"Ensalada de atún con papa",
+ items:[["tuna",100],["potato",150],
+ ["cucumber",100],["tomato",50],["avocado",50]],
+ prep:"Cuece la papa y córtala en cubos. Mezcla con el atún drenado, pepino, tomate y aguacate. Sazona con limón."
+ },
+ chickenTacos:{
+ title:"Tacos de pollo con aguacate",
+ items:[["chicken",100],["tortilla",60],
+ ["avocado",30],["tomato",50],["cucumber",80]],
+ prep:"Asa el pollo, córtalo en tiras y sirve en tortillas calientes con tomate y aguacate."
+ },
+ cottageFruit:{
+ title:"Cottage con fruta y almendras",
+ items:[["cottage",180],["apple",150],
+ ["nuts",15]],
+ prep:"Sirve el cottage con manzana picada y almendras."
+ },
+ tunaToast:{
+ title:"Tostadas de pan integral con atún",
+ items:[["tuna",100],["bread",60],
+ ["avocado",40],["tomato",100]],
+ prep:"Tuesta el pan y coloca el atún mezclado con aguacate y tomate."
+ },
+ beefRice:{
+ title:"Bistec con arroz y verduras",
+ items:[["beef",150],["rice",140],["zucchini",100],
+ ["carrot",100],["oil",5]],
+ prep:"Asa el bistec en sartén. Saltea las verduras y acompaña con arroz cocido."
+ },
+ chickenPotato:{
+ title:"Pollo a la plancha con papas",
+ items:[["chicken",150],["potato",230],
+ ["broccoli",100],["carrot",100],
+ ["oil",8],["avocado",25]],
+ prep:"Sazona el pollo con ajo y pimienta. Cocina a la plancha y sirve con papas y verduras."
+ },
+ porkSweet:{
+ title:"Lomo de cerdo con camote",
+ items:[["pork",150],["sweet",220],
+ ["zucchini",150],["carrot",50],["oil",8]],
+ prep:"Cocina el lomo en sartén hasta que esté bien cocido. Hornea el camote y saltea las verduras."
+ },
+ groundTacos:{
+ title:"Tacos de carne molida magra",
+ items:[["ground",140],["tortilla",90],
+ ["avocado",35],["tomato",100],
+ ["zucchini",100],["oil",3]],
+ prep:"Cocina la carne molida con ajo y tomate. Sirve en tortillas con aguacate y calabacitas."
+ },
+ beefPotato:{
+ title:"Bistec con papas doradas",
+ items:[["beef",150],["potato",200],
+ ["broccoli",100],["zucchini",100],
+ ["oil",8]],
+ prep:"Cocina el bistec a la plancha. Dora las papas previamente cocidas y acompaña con verduras."
+ },
+ porkRice:{
+ title:"Lomo de cerdo con arroz",
+ items:[["pork",150],["rice",150],
+ ["zucchini",100],["carrot",100],
+ ["oil",7]],
+ prep:"Asa el lomo, corta en rebanadas y acompaña con arroz y verduras salteadas."
+ },
+ eggDinner:{
+ title:"Huevo con claras y tortillas",
+ items:[["eggs",1],["whites",150],
+ ["tortilla",50],["avocado",40],["spinach",50]],
+ prep:"Cocina el huevo y las claras con espinacas. Acompaña con tortillas calientes y aguacate."
+ },
+ chickenDinner:{
+ title:"Sándwich integral de pollo",
+ items:[["chicken",100],["bread",60],
+ ["avocado",25],["tomato",80]],
+ prep:"Rellena el pan integral con pollo cocido, tomate y aguacate."
+ },
+ oatsDinner:{
+ title:"Avena con yogur y crema de cacahuate",
+ items:[["oats",35],["yogurt",200],
+ ["milk",100],["peanut",10]],
+ prep:"Mezcla los ingredientes. Puedes preparar la avena caliente y agregar el yogur al final."
+ },
+ beanDinner:{
+ title:"Tacos de frijoles con huevo",
+ items:[["beans",100],["eggs",1],
+ ["whites",100],["tortilla",45]],
+ prep:"Calienta los frijoles sin manteca. Cocina el huevo y las claras y sirve en tortillas."
+ },
+ tunaDinner:{
+ title:"Tacos de atún y aguacate",
+ items:[["tuna",120],["tortilla",60],
+ ["avocado",45],["tomato",50]],
+ prep:"Mezcla el atún con tomate y limón. Sirve en tortillas con aguacate."
+ }
+};
+
+const menu25=[
+ ["smoothie","tunaPotato","beefRice","eggDinner"],
+ ["eggToast","cottageFruit","chickenPotato","oatsDinner"],
+ ["yogurtOats","chickenTacos","porkSweet","tunaDinner"],
+ ["appleOats","tunaToast","groundTacos","eggDinner"],
+ ["smoothie","cottageFruit","beefPotato","chickenDinner"],
+ ["eggToast","tunaPotato","porkRice","oatsDinner"],
+ ["yogurtOats","chickenTacos","chickenPotato","beanDinner"]
+];
+
+const alternatives25=[
+ ["smoothie","eggToast","yogurtOats","appleOats"],
+ ["tunaPotato","chickenTacos","cottageFruit","tunaToast"],
+ ["beefRice","chickenPotato","porkSweet",
+ "groundTacos","beefPotato","porkRice"],
+ ["eggDinner","chickenDinner","oatsDinner",
+ "beanDinner","tunaDinner"]
+];
+
+const mealTimes=["08:30","11:30","15:30","20:30"];
+const mealNames=["Desayuno","Segunda comida",
+ "Comida principal","Cena"];
+
+let foodTab="menu";
+let foodDate=localDate25(new Date());
+
+function el(tag,cls,text){
+ const e=document.createElement(tag);
+ if(cls)e.className=cls;
+ if(text!==undefined)e.textContent=text;
+ return e;
+}
+
+function localDate25(d){
+ return d.getFullYear()+"-"+
+ String(d.getMonth()+1).padStart(2,"0")+"-"+
+ String(d.getDate()).padStart(2,"0");
+}
+
+function nutrition(){
+ if(!state.nutrition25){
+ state.nutrition25={
+ target:1650,
+ waterGoal:2000,
+ days:{},
+ favorites:[],
+ shopping:{}
+ };
+ }
+ return state.nutrition25;
+}
+
+function daily(date=foodDate){
+ const n=nutrition();
+ if(!n.days[date]){
+ n.days[date]={choices:{},done:{},water:0};
+ }
+ return n.days[date];
+}
+
+function dayIndex(date){
+ return (new Date(date+"T12:00:00")
+ .getDay()+6)%7;
+}
+
+function selectedMeal(date,index){
+ return daily(date).choices[index]||
+ menu25[dayIndex(date)][index];
+}
+
+function calories(id){
+ return meals25[id].items.reduce(
+ (total,item)=>total+
+ foods[item[0]][3]*item[1],0
+ );
+}
+
+function button(text,fn,secondary=false){
+ const b=el("button",secondary?"secondary":"",text);
+ b.type="button";
+ b.onclick=fn;
+ return b;
+}
+
+function card(title){
+ const c=el("div","fit-food");
+ c.appendChild(el("h3","",title));
+ return c;
+}
+
+const section=el("section","hidden");
+section.id="nutritionPage25";
+document.querySelector("main").appendChild(section);
+
+function renderFood(){
+ section.replaceChildren();
+
+ const banner=el("div","fit-food-banner");
+ banner.append(
+ el("small","","Mi Fit 45"),
+ el("h2","","Mi alimentación"),
+ el("p","","Alimentos de Alsuper y carnicerías locales.")
+ );
+
+ section.appendChild(banner);
+
+ const tabs=el("div","fit-food-tabs");
+
+ [
+ ["menu","Menú"],
+ ["shopping","Compras"],
+ ["favorites","Favoritos"],
+ ["settings","Ajustes"]
+ ].forEach(([id,label])=>{
+ tabs.appendChild(button(label,()=>{
+ foodTab=id;
+ renderFood();
+ },foodTab!==id));
+ });
+
+ section.appendChild(tabs);
+
+ if(foodTab==="menu")renderMenu();
+ if(foodTab==="shopping")renderShopping();
+ if(foodTab==="favorites")renderFavorites();
+ if(foodTab==="settings")renderSettings();
+}
+
+function renderMenu(){
+ const top=card("Mi menú diario");
+
+ const date=el("input");
+ date.type="date";
+ date.value=foodDate;
+
+ date.onchange=()=>{
+ if(date.value){
+ foodDate=date.value;
+ renderFood();
+ }
+ };
+
+ top.append(
+ date,
+ button("Ir a hoy",()=>{
+ foodDate=localDate25(new Date());
+ renderFood();
+ },true)
+ );
+
+ const data=daily();
+ const total=mealNames.reduce((sum,_,i)=>
+ sum+calories(selectedMeal(foodDate,i)),0);
+
+ const registered=mealNames.reduce((sum,_,i)=>
+ sum+(data.done[i]?
+ calories(selectedMeal(foodDate,i)):0),0);
+
+ top.append(
+ el("div","fit-food-kcal",
+ "Menú previsto: "+Math.round(total)+" kcal"),
+ el("div","fit-food-kcal",
+ "Referencia diaria: "+nutrition().target+" kcal"),
+ el("div","fit-food-kcal",
+ "Comidas registradas: "+
+ Math.round(registered)+" kcal")
+ );
+
+ const count=mealNames.filter(
+ (_,i)=>data.done[i]
+ ).length;
+
+ const progress=el("div","progress");
+ const fill=el("div");
+ fill.style.width=(count/4*100)+"%";
+ progress.appendChild(fill);
+
+ top.append(
+ el("small","",count+" de 4 comidas registradas"),
+ progress,
+ el("p","fit-food-note",
+ "Calorías estimadas. No es necesario compensar ni saltarse comidas para alcanzar un número exacto.")
+ );
+
+ section.appendChild(top);
+
+ mealNames.forEach((name,i)=>{
+ section.appendChild(renderMeal(i));
+ });
+
+ renderWater();
+}
+
+function renderMeal(index){
+ const id=selectedMeal(foodDate,index);
+ const meal=meals25[id];
+ const data=daily();
+
+ const c=el("div","fit-food");
+
+ c.append(
+ el("div","fit-food-time",
+ mealTimes[index]+" · "+mealNames[index]),
+ el("h3","",meal.title),
+ el("small","",
+ Math.round(calories(id))+" kcal aproximadamente")
+ );
+
+ meal.items.forEach(([food,qty])=>{
+ const f=foods[food];
+ const row=el("div","fit-food-ingredient");
+ row.append(
+ el("span","",f[0]),
+ el("strong","",qty+" "+f[1])
+ );
+ c.appendChild(row);
+ });
+
+ c.appendChild(el("p","fit-food-note",meal.prep));
+
+ c.appendChild(el("small","",
+ "Carnes, arroz, papas y camote: peso cocido. Atún: peso drenado. Avena: peso seco."
+ ));
+
+ const actions=el("div","fit-food-actions");
+
+ const isFavorite=nutrition().favorites.includes(id);
+
+ actions.appendChild(button(
+ isFavorite?"♥ Favorito":"♡ Guardar favorito",
+ ()=>{
+ const favorites=new Set(nutrition().favorites);
+
+ if(favorites.has(id))favorites.delete(id);
+ else favorites.add(id);
+
+ nutrition().favorites=Array.from(favorites);
+ save();
+ renderFood();
+ },true));
+
+ actions.appendChild(button("Cambiar comida",()=>{
+ const existing=c.querySelector(".fit-food-alternatives");
+
+ if(existing){
+ existing.remove();
+ return;
+ }
+
+ const editor=el("div","fit-food-alternatives");
+ const select=el("select");
+
+ alternatives25[index].forEach(optionId=>{
+ const option=el("option","",
+ meals25[optionId].title+
+ " ("+Math.round(calories(optionId))+" kcal)");
+
+ option.value=optionId;
+ select.appendChild(option);
+ });
+
+ select.value=id;
+
+ editor.append(
+ select,
+ button("Aplicar alternativa",()=>{
+ if(data.done[index]){
+ alert("Desmarca primero la comida registrada si deseas cambiarla.");
+ return;
+ }
+
+ data.choices[index]=select.value;
+ save();
+ renderFood();
+ })
+ );
+
+ c.appendChild(editor);
+ },true));
+
+ c.appendChild(actions);
+
+ const label=el("label","fit-food-check");
+
+ const check=el("input");
+ check.type="checkbox";
+ check.checked=!!data.done[index];
+
+ check.onchange=()=>{
+ data.done[index]=check.checked;
+ save();
+ renderFood();
+ };
+
+ label.append(
+ check,
+ el("span","","Comida realizada")
+ );
+
+ c.appendChild(label);
+
+ if(data.done[index]){
+ c.appendChild(el("div","fit-food-done",
+ "✓ Comida registrada"));
+ }
+
+ return c;
+}
+
+function renderWater(){
+ const c=card("Mi consumo de agua");
+ const data=daily();
+
+ c.appendChild(el("div","fit-food-water",
+ data.water+" / "+nutrition().waterGoal+" ml"));
+
+ const progress=el("div","progress");
+ const fill=el("div");
+
+ fill.style.width=Math.min(
+ 100,data.water/nutrition().waterGoal*100
+ )+"%";
+
+ progress.appendChild(fill);
+ c.appendChild(progress);
+
+ const actions=el("div","fit-food-actions");
+
+ [
+ ["+250 ml",250],
+ ["+500 ml",500],
+ ["-250 ml",-250]
+ ].forEach(([label,amount])=>{
+ actions.appendChild(button(label,()=>{
+ data.water=Math.max(0,data.water+amount);
+ save();
+ renderFood();
+ },amount<0));
+ });
+
+ c.append(
+ actions,
+ el("p","fit-food-note",
+ "Meta orientativa de agua simple. Ajusta según sed, ejercicio, clima y recomendaciones médicas.")
+ );
+
+ section.appendChild(c);
+}
+
+function weekDates(){
+ const monday=new Date(foodDate+"T12:00:00");
+ monday.setDate(monday.getDate()-dayIndex(foodDate));
+
+ return Array.from({length:7},(_,i)=>{
+ const d=new Date(monday);
+ d.setDate(d.getDate()+i);
+ return localDate25(d);
+ });
+}
+
+function renderShopping(){
+ const dates=weekDates();
+ const weekKey=dates[0];
+
+ const c=card("Mi lista de compras");
+
+ c.append(
+ el("p","","Semana del "+dates[0]+" al "+dates[6]),
+ el("p","fit-food-note",
+ "La lista se genera con el menú de los siete días, incluyendo tus sustituciones. Las cantidades de carne y arroz se convierten a peso aproximado en crudo.")
+ );
+
+ const date=el("input");
+ date.type="date";
+ date.value=foodDate;
+
+ date.onchange=()=>{
+ if(date.value){
+ foodDate=date.value;
+ renderFood();
+ }
+ };
+
+ c.appendChild(date);
+
+ const totals={};
+
+ dates.forEach(d=>{
+ mealNames.forEach((_,i)=>{
+ meals25[selectedMeal(d,i)].items
+ .forEach(([id,qty])=>{
+ totals[id]=(totals[id]||0)+qty;
+ });
+ });
+ });
+
+ const n=nutrition();
+
+ if(!n.shopping[weekKey]){
+ n.shopping[weekKey]={};
+ }
+
+ const checked=n.shopping[weekKey];
+ const lines=[];
+
+ ["Carnicería","Alsuper"].forEach(store=>{
+ c.appendChild(el("h3","",store));
+ lines.push(store);
+
+ Object.entries(totals)
+ .filter(([id])=>foods[id][2]===store)
+ .sort((a,b)=>foods[a[0]][0]
+ .localeCompare(foods[b[0]][0]))
+ .forEach(([id,qty])=>{
+
+ const f=foods[id];
+ const quantity=Math.ceil(qty*(f[4]||1));
+
+ const text=f[0]+": "+quantity+" "+f[1]+
+ (f[4]?" aprox. para comprar":"");
+
+ lines.push(text);
+
+ const label=el("label","fit-food-shopping");
+ const check=el("input");
+
+ check.type="checkbox";
+ check.checked=!!checked[id];
+
+ label.classList.toggle("checked",check.checked);
+
+ check.onchange=()=>{
+ checked[id]=check.checked;
+ save();
+ label.classList.toggle("checked",check.checked);
+ };
+
+ label.append(check,el("span","",text));
+ c.appendChild(label);
+ });
+ });
+
+ c.appendChild(button("Copiar lista",async()=>{
+ try{
+ await navigator.clipboard.writeText(lines.join("\n"));
+ alert("Lista copiada");
+ }catch(error){
+ const area=el("textarea");
+ area.value=lines.join("\n");
+ c.appendChild(area);
+ area.select();
+ }
+ }));
+
+ c.appendChild(button("Desmarcar todas las compras",()=>{
+ if(confirm("¿Limpiar las casillas de esta semana?")){
+ n.shopping[weekKey]={};
+ save();
+ renderFood();
+ }
+ },true));
+
+ c.appendChild(el("p","fit-food-note",
+ "Limón, sal, pimienta, ajo, especias y otros condimentos al gusto no están cuantificados. Revisa lo que ya tienes en casa antes de comprar."
+ ));
+
+ section.appendChild(c);
+}
+
+function renderFavorites(){
+ const c=card("Mis comidas favoritas");
+ const favorites=nutrition().favorites;
+
+ if(!favorites.length){
+ c.appendChild(el("p","",
+ "Todavía no tienes comidas favoritas."));
+ }
+
+ favorites.forEach(id=>{
+ if(!meals25[id])return;
+
+ const row=el("div","fit-food-ingredient");
+
+ const info=el("div");
+
+ info.append(
+ el("strong","",meals25[id].title),
+ el("p","",
+ Math.round(calories(id))+" kcal aprox.")
+ );
+
+ row.append(info,button("Quitar",()=>{
+ nutrition().favorites=
+ nutrition().favorites.filter(x=>x!==id);
+ save();
+ renderFood();
+ },true));
+
+ c.appendChild(row);
+ });
+
+ section.appendChild(c);
+}
+
+function renderSettings(){
+ const c=card("Mi perfil nutricional");
+
+ c.appendChild(el("p","",
+ "Cuatro comidas: 08:30, 11:30, 15:30 y 20:30."
+ ));
+
+ c.appendChild(el("p","",
+ "Sin caldos, coliflor ni queso panela."
+ ));
+
+ c.appendChild(el("label","","Referencia de calorías diarias"));
+
+ const target=el("input");
+ target.type="number";
+ target.min="1200";
+ target.max="3500";
+ target.step="50";
+ target.value=nutrition().target;
+
+ c.appendChild(target);
+
+ c.appendChild(el("label","","Meta de agua simple (ml)"));
+
+ const water=el("input");
+ water.type="number";
+ water.min="500";
+ water.max="4000";
+ water.step="250";
+ water.value=nutrition().waterGoal;
+
+ c.appendChild(water);
+
+ c.appendChild(button("Guardar configuración",()=>{
+ const t=Number(target.value);
+ const w=Number(water.value);
+
+ if(!target.value||!water.value||
+ !Number.isFinite(t)||!Number.isFinite(w)||
+ t<1200||t>3500||w<500||w>4000){
+ alert("Revisa los valores introducidos.");
+ return;
+ }
+
+ nutrition().target=t;
+ nutrition().waterGoal=w;
+
+ if(save())alert("Configuración guardada");
+ }));
+
+ c.appendChild(el("p","fit-food-note",
+ "Cambiar la referencia de calorías no modifica automáticamente las porciones. Las metas deben individualizarse según tu salud, actividad y evolución."
+ ));
+
+ section.appendChild(c);
+}
+
+const nav=document.querySelector("nav");
+const foodButton=button("",()=>{
+ showPage("nutritionPage25");
+});
+
+foodButton.innerHTML="🍽️<br>Comidas";
+
+nav.insertBefore(
+ foodButton,
+ nav.lastElementChild
+);
+
+showPage=function(id){
+ if(id==="nutritionPage25"){
+ document.querySelectorAll("main > section")
+ .forEach(s=>s.classList.add("hidden"));
+
+ section.classList.remove("hidden");
+ renderFood();
+ window.scrollTo(0,0);
+ return;
+ }
+
+ section.classList.add("hidden");
+ previousShowPage25(id);
+};
+
+nutrition();
+save();
+
+})();
+</script>
+<!-- FIN DE ACTUALIZACION 2.5 -->
