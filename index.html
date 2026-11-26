@@ -8,6 +8,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mi Fit 45">
 <title>Mi Fit 45</title>
+ 
+<!-- CONFIGURACION PWA MI FIT 45 -->
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- FIN CONFIGURACION PWA -->
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f7f4f8;color:#302a34;font-family:Arial,sans-serif}
@@ -8883,6 +8892,72 @@ showPage("home30");
 })();
 </script>
 <!-- FIN DE ACTUALIZACION 3.0 -->
+
+<!-- MI FIT 45 - ACTUALIZACION 3.1 -->
+<script>
+(function(){
+ "use strict";
+
+ const version=document.querySelector(".fit-version");
+
+ if(version){
+  version.textContent="Version 3.1";
+ }
+
+ const connection=document.createElement("div");
+
+ connection.style.cssText=`
+  text-align:center;
+  padding:7px;
+  font-size:11px;
+  background:#EDF3EF;
+  color:#426651;
+ `;
+
+ document.querySelector("header").after(connection);
+
+ function updateConnection(){
+  if(navigator.onLine){
+   connection.textContent="En línea";
+   connection.style.background="#EDF3EF";
+   connection.style.color="#426651";
+  }else{
+   connection.textContent="Modo sin internet";
+   connection.style.background="#FFF0D9";
+   connection.style.color="#87602C";
+  }
+ }
+
+ window.addEventListener("online",updateConnection);
+ window.addEventListener("offline",updateConnection);
+
+ updateConnection();
+
+ if("serviceWorker" in navigator){
+
+  navigator.serviceWorker.register("./sw.js")
+   .then(function(registration){
+
+    console.log("Mi Fit 45: Service worker registrado");
+
+    registration.update().catch(console.warn);
+
+   })
+   .catch(function(error){
+
+    console.error("Error PWA:",error);
+
+    connection.textContent=
+     "Modo sin internet no disponible";
+
+   });
+
+ }
+
+})();
+</script>
+<!-- FIN DE ACTUALIZACION 3.1 -->
+
 </body>
 </html> 
  
