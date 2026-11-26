@@ -6686,6 +6686,1122 @@ save();
 
 /* FIN DE ACTUALIZACION 2.8 */
 
+/* MI FIT 45 - ACTUALIZACION 2.9 */
+
+if(version)version.textContent="Version 2.9";
+
+const style29=document.createElement("style");
+
+style29.textContent=`
+.fit-balance29{
+ background:white;
+ padding:18px;
+ border-radius:20px;
+ margin-bottom:15px;
+}
+.fit-balance29 h3{
+ color:#483353;
+}
+.fit-metric29{
+ margin:15px 0;
+}
+.fit-metric-label29{
+ display:flex;
+ justify-content:space-between;
+ gap:8px;
+ font-size:13px;
+ margin-bottom:6px;
+}
+.fit-track29{
+ background:#eee9f1;
+ height:9px;
+ border-radius:10px;
+ overflow:hidden;
+}
+.fit-fill29{
+ height:100%;
+ border-radius:10px;
+}
+.fit-suggestion29{
+ background:#f3edf6;
+ border-radius:12px;
+ padding:14px;
+ margin:12px 0;
+ font-size:13px;
+ line-height:1.6;
+}
+.fit-grid29{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
+ margin:14px 0;
+}
+.fit-stat29{
+ background:#f7f4fa;
+ border-radius:14px;
+ padding:14px;
+}
+.fit-stat29 strong{
+ display:block;
+ font-size:24px;
+ color:#735482;
+ margin-bottom:6px;
+}
+.fit-stat29 small{
+ font-size:12px;
+}
+.fit-change29{
+ border-bottom:1px solid #e9e1ed;
+ padding:10px 0;
+ font-size:13px;
+}
+.fit-week29{
+ display:grid;
+ grid-template-columns:repeat(7,minmax(0,1fr));
+ gap:5px;
+ margin:15px 0;
+}
+.fit-day29{
+ text-align:center;
+ font-size:11px;
+}
+.fit-day-box29{
+ padding:10px 2px;
+ margin-top:6px;
+ border-radius:9px;
+ background:#f0ebf3;
+ color:#735482;
+}
+.fit-day-box29.done{
+ background:#50866b;
+ color:white;
+}
+.fit-day-box29.partial{
+ background:#dfcce8;
+}
+.fit-chart29{
+ display:flex;
+ gap:8px;
+ align-items:flex-end;
+ height:150px;
+ margin:20px 0 8px;
+}
+.fit-bar-column29{
+ flex:1;
+ height:100%;
+ min-width:0;
+ display:flex;
+ flex-direction:column;
+ justify-content:flex-end;
+ align-items:center;
+}
+.fit-bar29{
+ background:#735482;
+ width:70%;
+ border-radius:6px 6px 0 0;
+ min-height:2px;
+}
+.fit-bar-column29 small{
+ font-size:10px;
+ margin:4px 0;
+}
+.fit-review29{
+ background:white;
+ padding:14px;
+ border-radius:12px;
+ margin-top:12px;
+}
+`;
+
+document.head.appendChild(style29);
+
+function settings29(){
+ const n=nutrition();
+
+ if(!n.assistant29){
+ n.assistant29={
+ protein:120,
+ fat:55
+ };
+ }
+
+ return n.assistant29;
+}
+
+function goals29(){
+ const target=nutrition().target;
+ const p=settings29().protein;
+ const f=settings29().fat;
+
+ return {
+ kcal:target,
+ protein:p,
+ fat:f,
+ carbs:Math.max(
+ 0,(target-p*4-f*9)/4
+ )
+ };
+}
+
+function sumMeals29(date,completedOnly=false){
+ const result={
+ kcal:0,protein:0,carbs:0,fat:0
+ };
+
+ for(let i=0;i<4;i++){
+ if(completedOnly&&!daily(date).done[i]){
+ continue;
+ }
+
+ const recipe=resolveRecipe26(date,i);
+
+ if(recipe.blocked)continue;
+
+ const m=macros26(recipe);
+
+ Object.keys(result).forEach(k=>{
+ result[k]+=m[k];
+ });
+ }
+
+ return result;
+}
+
+function metricBar29(label,value,target,unit,color){
+ const wrap=el("div","fit-metric29");
+ const header=el("div","fit-metric-label29");
+
+ header.append(
+ el("span","",label),
+ el("strong","",
+ Math.round(value)+" / "+
+ Math.round(target)+" "+unit)
+ );
+
+ const track=el("div","fit-track29");
+ const fill=el("div","fit-fill29");
+
+ fill.style.width=
+ Math.min(
+ 100,value/Math.max(target,1)*100
+ )+"%";
+
+ fill.style.background=color;
+
+ track.appendChild(fill);
+ wrap.append(header,track);
+
+ return wrap;
+}
+
+function advice29(total){
+ const goal=goals29();
+ const messages=[];
+
+ if(total.protein<goal.protein*0.9){
+ messages.push(
+ "El menú previsto aporta menos proteína que tu referencia. Puedes revisar las porciones de proteínas magras en las comidas pendientes."
+ );
+ }
+
+ if(total.kcal<goal.kcal*0.9){
+ messages.push(
+ "El menú previsto queda por debajo de tu referencia energética. Revisa que las porciones sean suficientes para tu apetito y recuperación."
+ );
+ }
+
+ if(total.kcal>goal.kcal*1.1){
+ messages.push(
+ "El menú previsto supera tu referencia energética. Puedes revisar las porciones, sin necesidad de saltarte comidas ni compensar después."
+ );
+ }
+
+ if(!messages.length){
+ messages.push(
+ "Tu menú se aproxima a las referencias nutricionales. Mantén una alimentación variada y escucha tus señales de hambre y saciedad."
+ );
+ }
+
+ return messages;
+}
+
+/* PROPUESTAS DE AJUSTE */
+
+function score29(total){
+ const goal=goals29();
+
+ const energy=
+ (total.kcal-goal.kcal)/
+ Math.max(goal.kcal,1);
+
+ const protein=
+ (total.protein-goal.protein)/
+ Math.max(goal.protein,1);
+
+ const fat=
+ (total.fat-goal.fat)/
+ Math.max(goal.fat,1);
+
+ const carbs=
+ (total.carbs-goal.carbs)/
+ Math.max(goal.carbs,1);
+
+ return energy*energy*4+
+ protein*protein*3+
+ fat*fat*0.5+
+ carbs*carbs*0.5;
+}
+
+function propose29(date){
+ const plans=[];
+
+ for(let i=0;i<4;i++){
+ const recipe=resolveRecipe26(date,i);
+
+ if(recipe.blocked){
+ return {
+ error:"Hay comidas sin una receta compatible. Selecciona alternativas antes de ajustar las porciones."
+ };
+ }
+
+ plans.push({
+ index:i,
+ locked:!!daily(date).done[i],
+ base:recipe.base,
+ original:JSON.parse(
+ JSON.stringify(recipe.items)
+ ),
+ items:JSON.parse(
+ JSON.stringify(recipe.items)
+ )
+ });
+ }
+
+ if(plans.every(p=>p.locked)){
+ return {
+ error:"Todas las comidas de este día ya están registradas."
+ };
+ }
+
+ function total(){
+ const result={
+ kcal:0,protein:0,carbs:0,fat:0
+ };
+
+ plans.forEach(p=>{
+ const m=macros26({items:p.items});
+
+ Object.keys(result).forEach(k=>{
+ result[k]+=m[k];
+ });
+ });
+
+ return result;
+ }
+
+ const before=total();
+
+ let bestScore=score29(before);
+
+ for(let iteration=0;iteration<60;iteration++){
+ let best=null;
+
+ plans.forEach(p=>{
+ if(p.locked)return;
+
+ p.items.forEach((item,j)=>{
+ const [id,qty]=item;
+ const original=p.original[j][1];
+
+ if(!foodAllowed28(id))return;
+
+ const step=
+ foods[id][1]==="pzas"?0.5:5;
+
+ if(id==="oil")return;
+
+ [-step,step].forEach(delta=>{
+ const candidate=
+ Math.round((qty+delta)*100)/100;
+
+ if(candidate<=0||
+ candidate<original*0.8||
+ candidate>original*1.3){
+ return;
+ }
+
+ item[1]=candidate;
+
+ const s=score29(total());
+
+ item[1]=qty;
+
+ if(s<bestScore-0.00001&&
+ (!best||s<best.score)){
+ best={
+ plan:p,
+ index:j,
+ value:candidate,
+ score:s
+ };
+ }
+ });
+ });
+ });
+
+ if(!best)break;
+
+ best.plan.items[best.index][1]=
+ best.value;
+
+ bestScore=best.score;
+ }
+
+ const changes=[];
+
+ plans.forEach(p=>{
+ if(p.locked)return;
+
+ p.items.forEach(([id,qty],j)=>{
+ const original=p.original[j][1];
+
+ if(Math.abs(qty-original)>0.001){
+ changes.push({
+ meal:mealNames[p.index],
+ food:foods[id][0],
+ old:original,
+ next:qty,
+ unit:foods[id][1]
+ });
+ }
+ });
+ });
+
+ return {
+ date,
+ plans,
+ before,
+ after:total(),
+ changes
+ };
+}
+
+function showProposal29(parent){
+ const previous=parent.querySelector(
+ ".fit-review29"
+ );
+
+ if(previous)previous.remove();
+
+ const proposal=propose29(foodDate);
+
+ const review=el("div","fit-review29");
+
+ if(proposal.error){
+ review.textContent=proposal.error;
+ parent.appendChild(review);
+ return;
+ }
+
+ if(!proposal.changes.length){
+ review.textContent=
+ "No se encontraron ajustes de porciones útiles dentro de los límites establecidos.";
+
+ parent.appendChild(review);
+ return;
+ }
+
+ review.append(
+ el("h3","","Propuesta de ajustes"),
+
+ el("p","",
+ "Antes: "+
+ Math.round(proposal.before.kcal)+
+ " kcal · "+
+ Math.round(proposal.before.protein)+
+ " g de proteína"),
+
+ el("p","",
+ "Después: "+
+ Math.round(proposal.after.kcal)+
+ " kcal · "+
+ Math.round(proposal.after.protein)+
+ " g de proteína")
+ );
+
+ proposal.changes.forEach(change=>{
+ review.appendChild(el(
+ "div","fit-change29",
+ change.meal+" · "+
+ change.food+": "+
+ change.old+" → "+
+ change.next+" "+change.unit
+ ));
+ });
+
+ review.appendChild(el(
+ "p","fit-food-note",
+ "Estos ajustes son orientativos. Solo modifican porciones de comidas pendientes y no garantizan alcanzar todas las referencias."
+ ));
+
+ review.appendChild(button(
+ "Aceptar estos ajustes",()=>{
+
+ if(foodDate!==proposal.date){
+ alert("La fecha seleccionada cambió.");
+ return;
+ }
+
+ for(const p of proposal.plans){
+ if(p.locked)continue;
+
+ const current=resolveRecipe26(
+ proposal.date,p.index
+ );
+
+ if(
+ daily(proposal.date).done[p.index]||
+ current.base!==p.base||
+ JSON.stringify(current.items)!==
+ JSON.stringify(p.original)
+ ){
+ alert("El menú cambió. Genera una nueva propuesta.");
+ return;
+ }
+ }
+
+ proposal.plans.forEach(p=>{
+ if(p.locked)return;
+
+ storage28().edits[
+ proposal.date+"-"+p.index
+ ]={
+ base:p.base,
+ items:p.items
+ };
+
+ });
+
+ nutrition().shopping={};
+
+ if(save())renderFood();
+ }
+ ));
+
+ review.appendChild(button(
+ "Conservar mi menú actual",()=>{
+ review.remove();
+ },true));
+
+ parent.appendChild(review);
+}
+
+function renderBalance29(){
+ const c=el("div","fit-balance29");
+
+ const total=sumMeals29(foodDate);
+ const registered=sumMeals29(foodDate,true);
+ const target=goals29();
+
+ c.append(
+ el("h3","","Mi balance nutricional"),
+
+ el("small","",
+ "Menú planificado para "+foodDate),
+
+ metricBar29(
+ "Calorías",total.kcal,
+ target.kcal,"kcal","#735482"
+ ),
+
+ metricBar29(
+ "Proteínas",total.protein,
+ target.protein,"g","#735482"
+ ),
+
+ metricBar29(
+ "Carbohidratos",total.carbs,
+ target.carbs,"g","#83ad99"
+ ),
+
+ metricBar29(
+ "Grasas",total.fat,
+ target.fat,"g","#d9b477"
+ )
+ );
+
+ const consumed=el(
+ "div","fit-suggestion29"
+ );
+
+ consumed.append(
+ el("strong","","Consumo registrado"),
+ el("p","",
+ Math.round(registered.kcal)+
+ " kcal · "+
+ formatMacros26(registered)),
+ el("small","",
+ "Solo incluye las comidas que marcaste como realizadas.")
+ );
+
+ c.appendChild(consumed);
+
+ c.appendChild(el(
+ "h3","","Sugerencias"
+ ));
+
+ advice29(total).forEach(text=>{
+ c.appendChild(el(
+ "p","fit-suggestion29",text
+ ));
+ });
+
+ c.appendChild(button(
+ "Proponer ajustes de porciones",
+ ()=>showProposal29(c)
+ ));
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "No es obligatorio alcanzar exactamente estas cantidades cada día. Las recomendaciones son estimaciones y no sustituyen una valoración nutricional."
+ ));
+
+ const tabs=section.querySelector(
+ ".fit-food-tabs"
+ );
+
+ if(tabs)tabs.after(c);
+ else section.prepend(c);
+}
+
+/* RESUMEN SEMANAL */
+
+function sessionDate29(session){
+ const d=new Date(session.date);
+
+ if(!Number.isFinite(d.getTime())){
+ return "";
+ }
+
+ return localDate25(d);
+}
+
+function stat29(title,value){
+ const card=el("div","fit-stat29");
+
+ card.append(
+ el("strong","",value),
+ el("small","",title)
+ );
+
+ return card;
+}
+
+function average29(values){
+ if(!values.length)return null;
+
+ return values.reduce(
+ (a,b)=>a+b,0
+ )/values.length;
+}
+
+function chart29(title,data,unit){
+ const c=card(title);
+
+ const available=data
+ .filter(d=>d.value!==null);
+
+ if(!available.length){
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Todavía no hay registros para esta semana."
+ ));
+
+ return c;
+ }
+
+ const maximum=Math.max(
+ 1,...available.map(d=>d.value)
+ );
+
+ const chart=el("div","fit-chart29");
+
+ data.forEach(d=>{
+ const column=el(
+ "div","fit-bar-column29"
+ );
+
+ if(d.value===null){
+ column.append(
+ el("small","","—"),
+ el("small","",d.label)
+ );
+ }else{
+ const bar=el("div","fit-bar29");
+
+ bar.style.height=
+ Math.max(
+ 2,d.value/maximum*100
+ )+"px";
+
+ bar.title=
+ Math.round(d.value)+" "+unit;
+
+ column.append(
+ el("small","",
+ Math.round(d.value)),
+ bar,
+ el("small","",d.label)
+ );
+ }
+
+ chart.appendChild(column);
+ });
+
+ c.appendChild(chart);
+
+ c.appendChild(el(
+ "small","",
+ "— = sin registro. Valores en "+unit+"."
+ ));
+
+ return c;
+}
+
+function renderWeekly29(){
+ section.replaceChildren();
+
+ const banner=el(
+ "div","fit-food-banner"
+ );
+
+ banner.append(
+ el("small","","Mi Fit 45"),
+ el("h2","","Mi resumen semanal")
+ );
+
+ section.appendChild(banner);
+
+ const controls=el(
+ "div","fit-food-actions"
+ );
+
+ controls.append(
+ button("Semana anterior",()=>{
+ const date=new Date(
+ foodDate+"T12:00:00"
+ );
+
+ date.setDate(date.getDate()-7);
+
+ foodDate=localDate25(date);
+ renderFood();
+ },true),
+
+ button("Semana actual",()=>{
+ foodDate=localDate25(new Date());
+ renderFood();
+ },true),
+
+ button("Semana siguiente",()=>{
+ const date=new Date(
+ foodDate+"T12:00:00"
+ );
+
+ date.setDate(date.getDate()+7);
+
+ foodDate=localDate25(date);
+ renderFood();
+ },true)
+ );
+
+ section.appendChild(controls);
+
+ section.appendChild(button(
+ "Volver al menú",()=>{
+ foodTab="menu";
+ renderFood();
+ },true));
+
+ const dates=weekDates();
+
+ const c=card(
+ dates[0]+" al "+dates[6]
+ );
+
+ const dailyStats=dates.map(
+ (date,i)=>{
+ const record=daily(date);
+
+ const count=[0,1,2,3].filter(
+ j=>record.done[j]
+ ).length;
+
+ const sessions=state.history.filter(
+ s=>sessionDate29(s)===date
+ );
+
+ return {
+ date,
+ label:["Lun","Mar","Mié",
+ "Jue","Vie","Sáb","Dom"][i],
+ count,
+ sessions:sessions.length,
+ water:Number(record.water)||0,
+ consumed:sumMeals29(date,true)
+ };
+ });
+
+ const completed=dailyStats.reduce(
+ (sum,d)=>sum+d.sessions,0
+ );
+
+ const meals=dailyStats.reduce(
+ (sum,d)=>sum+d.count,0
+ );
+
+ const fullDays=dailyStats.filter(
+ d=>d.count===4
+ );
+
+ const waterDays=dailyStats.filter(
+ d=>d.water>0
+ );
+
+ const waterAverage=average29(
+ waterDays.map(d=>d.water)
+ );
+
+ const proteinAverage=average29(
+ fullDays.map(d=>d.consumed.protein)
+ );
+
+ const calorieAverage=average29(
+ fullDays.map(d=>d.consumed.kcal)
+ );
+
+ const grid=el("div","fit-grid29");
+
+ grid.append(
+ stat29(
+ "Entrenamientos registrados",
+ String(completed)
+ ),
+
+ stat29(
+ "Comidas registradas",
+ meals+"/28"
+ ),
+
+ stat29(
+ "Agua promedio registrada",
+ waterAverage===null?
+ "—":
+ (waterAverage/1000).toFixed(1)+" L"
+ ),
+
+ stat29(
+ "Proteína promedio",
+ proteinAverage===null?
+ "—":
+ Math.round(proteinAverage)+" g"
+ ),
+
+ stat29(
+ "Calorías promedio",
+ calorieAverage===null?
+ "—":
+ Math.round(calorieAverage)
+ ),
+
+ stat29(
+ "Días con registro completo",
+ fullDays.length+"/7"
+ )
+ );
+
+ c.appendChild(grid);
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Los promedios nutricionales solo utilizan días con las cuatro comidas registradas. El promedio de agua utiliza días con consumo registrado. Un día sin datos no equivale a cero consumo."
+ ));
+
+ c.appendChild(el(
+ "h3","","Entrenamientos"
+ ));
+
+ const calendar=el(
+ "div","fit-week29"
+ );
+
+ dailyStats.forEach(d=>{
+ const day=el("div","fit-day29");
+
+ day.append(
+ el("span","",d.label),
+ el(
+ "div",
+ "fit-day-box29"+
+ (d.sessions?" done":""),
+ d.sessions?"✓":"—"
+ )
+ );
+
+ calendar.appendChild(day);
+ });
+
+ c.appendChild(calendar);
+
+ c.appendChild(el(
+ "h3","","Registro de comidas"
+ ));
+
+ const foodCalendar=el(
+ "div","fit-week29"
+ );
+
+ dailyStats.forEach(d=>{
+ const day=el("div","fit-day29");
+
+ day.append(
+ el("span","",d.label),
+ el(
+ "div",
+ "fit-day-box29"+
+ (d.count===4?
+ " done":d.count?
+ " partial":""),
+ d.count+"/4"
+ )
+ );
+
+ foodCalendar.appendChild(day);
+ });
+
+ c.appendChild(foodCalendar);
+
+ section.appendChild(c);
+
+ section.appendChild(chart29(
+ "Proteína registrada por día",
+ dailyStats.map(d=>({
+ label:d.label,
+ value:d.count?
+ d.consumed.protein:null
+ })),
+ "g"
+ ));
+
+ section.appendChild(chart29(
+ "Agua registrada por día",
+ dailyStats.map(d=>({
+ label:d.label,
+ value:d.water||null
+ })),
+ "ml"
+ ));
+
+ renderMeasures29(dates);
+}
+
+function renderMeasures29(dates){
+ const c=card(
+ "Mi evolución corporal"
+ );
+
+ [
+ ["weight","Peso","kg"],
+ ["waist","Cintura","cm"],
+ ["hip","Cadera","cm"]
+ ].forEach(([key,label,unit])=>{
+
+ const records=state.measurements
+ .filter(r=>
+ Number(r[key])>0&&
+ Number.isFinite(Number(r[key]))&&
+ Number.isFinite(
+ new Date(r.date).getTime()
+ )
+ )
+ .map(r=>({
+ date:localDate25(new Date(r.date)),
+ value:Number(r[key]),
+ time:new Date(r.date).getTime()
+ }))
+ .sort((a,b)=>a.time-b.time);
+
+ const current=records.filter(r=>
+ r.date>=dates[0]&&
+ r.date<=dates[6]
+ );
+
+ const previous=records.filter(
+ r=>r.date<dates[0]
+ ).pop();
+
+ const row=el(
+ "div","fit-food-ingredient"
+ );
+
+ row.appendChild(
+ el("strong","",label)
+ );
+
+ if(!current.length){
+ row.appendChild(
+ el("small","","Sin registro semanal")
+ );
+ }else{
+ const last=current[
+ current.length-1
+ ];
+
+ const first=previous||
+ current[0];
+
+ const change=last.value-first.value;
+
+ const info=el("div");
+
+ info.append(
+ el("strong","",
+ last.value.toFixed(1)+" "+unit),
+
+ el("small","",
+ previous||current.length>1?
+ " · Cambio: "+
+ (change>0?"+":"")+
+ change.toFixed(1)+" "+unit:
+ " · Primer registro")
+ );
+
+ row.appendChild(info);
+ }
+
+ c.appendChild(row);
+ });
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Los cambios de peso y medidas pueden incluir fluctuaciones normales. No representan necesariamente cambios de grasa corporal."
+ ));
+
+ section.appendChild(c);
+}
+
+/* REFERENCIAS NUTRICIONALES */
+
+const previousSettings29=renderSettings;
+
+renderSettings=function(){
+ previousSettings29();
+
+ const c=card(
+ "Mis referencias de macronutrientes"
+ );
+
+ c.appendChild(el(
+ "label","","Proteína diaria (g)"
+ ));
+
+ const protein=el("input");
+
+ protein.type="number";
+ protein.min="60";
+ protein.max="180";
+ protein.value=settings29().protein;
+
+ c.appendChild(protein);
+
+ c.appendChild(el(
+ "label","","Grasas diarias (g)"
+ ));
+
+ const fat=el("input");
+
+ fat.type="number";
+ fat.min="40";
+ fat.max="100";
+ fat.value=settings29().fat;
+
+ c.appendChild(fat);
+
+ c.appendChild(button(
+ "Guardar referencias",()=>{
+
+ const p=Number(protein.value);
+ const f=Number(fat.value);
+
+ if(
+ !Number.isFinite(p)||
+ !Number.isFinite(f)||
+ p<60||p>180||
+ f<40||f>100||
+ nutrition().target-p*4-f*9<400
+ ){
+ alert("Revisa las referencias nutricionales.");
+ return;
+ }
+
+ settings29().protein=p;
+ settings29().fat=f;
+
+ if(save()){
+ renderFood();
+ }
+ }
+ ));
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Los carbohidratos de referencia se calculan con la energía restante. Las referencias son orientativas y no una prescripción médica."
+ ));
+
+ section.appendChild(c);
+};
+
+/* INTEGRACION CON LA APP */
+
+const previousFood29=renderFood;
+
+renderFood=function(){
+ if(foodTab==="weekly29"){
+ hydrate27();
+ renderWeekly29();
+ return;
+ }
+
+ previousFood29();
+
+ if(foodTab==="menu"){
+ renderBalance29();
+ }
+
+ const controls=el(
+ "div","fit-food-actions"
+ );
+
+ controls.style.marginBottom="15px";
+
+ controls.appendChild(button(
+ "Mi resumen semanal",()=>{
+ foodTab="weekly29";
+ renderFood();
+ },true));
+
+ const banner=section.querySelector(
+ ".fit-food-banner"
+ );
+
+ if(banner)banner.after(controls);
+};
+
+settings29();
+save();
+
+/* FIN DE ACTUALIZACION 2.9 */
+
 
 nutrition();
 save();
