@@ -9565,6 +9565,961 @@ window.addEventListener("offline",()=>{
 
 });
 
+/* =====================================
+   MI FIT 45 - ACTUALIZACION 3.3
+   SINCRONIZACION EN LA NUBE
+===================================== */
+
+const version33=document.querySelector(".fit-version");
+
+if(version33){
+ version33.textContent="Version 3.3";
+}
+
+const META33="mi_fit_45_sync33";
+const BACKUP33="mi_fit_45_conflict33";
+
+let busy33=false;
+let timer33=null;
+let conflict33=false;
+
+/* INTERFAZ */
+
+const syncBox33=document.createElement("div");
+
+syncBox33.style.cssText=`
+ background:#F0EAF3;
+ color:#483353;
+ padding:10px 12px;
+ text-align:center;
+ font-size:12px;
+`;
+
+const syncLabel33=document.createElement("div");
+
+syncLabel33.textContent=
+ "Sincronizacion pendiente de configurar";
+
+const syncButton33=document.createElement("button");
+
+syncButton33.type="button";
+syncButton33.textContent="Sincronizar ahora";
+
+syncButton33.style.cssText=`
+ font-size:11px;
+ min-height:35px;
+ margin-top:6px;
+ padding:6px 16px;
+ border-radius:8px;
+ background:#735482;
+ color:white;
+`;
+
+syncButton33.onclick=()=>sync33(true);
+
+syncBox33.append(
+ syncLabel33,
+ syncButton33
+);
+
+accountButton.after(syncBox33);
+
+function status33(text,color="#483353"){
+
+ syncLabel33.textContent=text;
+ syncLabel33.style.color=color;
+
+}
+
+/* INFORMACION LOCAL */
+
+function local33(){
+
+ const raw=localStorage.getItem(KEY);
+
+ if(!raw){
+
+  throw new Error(
+   "No se encontraron datos locales guardados."
+  );
+
+ }
+
+ return JSON.parse(raw);
+
+}
+
+/* COMPARACION ESTABLE DE DATOS */
+
+function canonical33(value){
+
+ if(Array.isArray(value)){
+
+  return value.map(canonical33);
+
+ }
+
+ if(value!==null&&typeof value==="object"){
+
+  const output=Object.create(null);
+
+  Object.keys(value)
+   .sort()
+   .forEach(key=>{
+
+    output[key]=canonical33(value[key]);
+
+   });
+
+  return output;
+
+ }
+
+ return value;
+
+}
+
+function signature33(value){
+
+ return JSON.stringify(canonical33(value));
+
+}
+
+function getMeta33(){
+
+ const raw=localStorage.getItem(META33);
+
+ return raw?JSON.parse(raw):null;
+
+}
+
+function setMeta33(uid,row,localData){
+
+ localStorage.setItem(
+  META33,
+  JSON.stringify({
+
+   user:uid,
+
+   version:Number(row.version),
+
+   baseline:signature33(localData),
+
+   updatedAt:row.updated_at
+
+  })
+ );
+
+}
+
+function validData33(data){
+
+ return !!(
+  data&&
+  typeof data==="object"&&
+  !Array.isArray(data)&&
+  data.profile&&
+  data.records&&
+  Array.isArray(data.history)&&
+  Array.isArray(data.measurements)
+ );
+
+}
+
+/* RESPALDO DE SEGURIDAD */
+
+function backup33(uid,localData,cloudData){
+
+ localStorage.setItem(
+  BACKUP33,
+  JSON.stringify({
+
+   user:uid,
+
+   date:new Date().toISOString(),
+
+   local:localData,
+
+   cloud:cloudData
+
+  })
+ );
+
+}
+
+function downloadBackup33(){
+
+ const raw=localStorage.getItem(BACKUP33);
+
+ if(!raw){
+
+  alert("No hay respaldos de conflictos.");
+
+  return;
+
+ }
+
+ const blob=new Blob(
+  [raw],
+  {type:"application/json"}
+ );
+
+ const url=URL.createObjectURL(blob);
+
+ const a=document.createElement("a");
+
+ a.href=url;
+
+ a.download=
+  "Mi-Fit-45-respaldo-conflicto.json";
+
+ document.body.appendChild(a);
+
+ a.click();
+
+ a.remove();
+
+ setTimeout(
+  ()=>URL.revokeObjectURL(url),
+  5000
+ );
+
+}
+
+/* VERIFICAR USUARIO */
+
+async function user33(){
+
+ const client=await initialize32();
+
+ const result=await client.auth.getUser();
+
+ if(result.error)throw result.error;
+
+ if(!result.data.user){
+
+  throw new Error(
+   "Inicia sesion en tu cuenta privada."
+  );
+
+ }
+
+ return result.data.user.id;
+
+}
+
+function sameUser33(uid){
+
+ return !!(
+  session32&&
+  session32.user&&
+  session32.user.id===uid
+ );
+
+}
+
+/* CONSULTAR LA NUBE */
+
+async function readCloud33(uid){
+
+ const result=await client32
+
+  .from("mi_fit_data")
+
+  .select("data,version,updated_at")
+
+  .eq("user_id",uid)
+
+  .maybeSingle();
+
+ if(result.error)throw result.error;
+
+ return result.data;
+
+}
+
+/* CREAR EL PRIMER REGISTRO */
+
+async function createCloud33(uid,data){
+
+ const result=await client32
+
+  .from("mi_fit_data")
+
+  .insert({
+
+   user_id:uid,
+   data:data
+
+  })
+
+  .select("version,updated_at")
+
+  .single();
+
+ if(result.error)throw result.error;
+
+ return result.data;
+
+}
+
+/* ACTUALIZAR CON CONTROL DE VERSION */
+
+async function updateCloud33(
+ uid,data,expectedVersion
+){
+
+ const result=await client32
+
+  .from("mi_fit_data")
+
+  .update({
+
+   data:data
+
+  })
+
+  .eq("user_id",uid)
+
+  .eq("version",expectedVersion)
+
+  .select("version,updated_at")
+
+  .maybeSingle();
+
+ if(result.error)throw result.error;
+
+ if(!result.data){
+
+  throw new Error(
+   "La nube cambio durante la sincronizacion. No se sobrescribieron los datos. Vuelve a sincronizar."
+  );
+
+ }
+
+ return result.data;
+
+}
+
+/* RESTAURAR INFORMACION DE LA NUBE */
+
+function restoreCloud33(uid,row){
+
+ if(!validData33(row.data)){
+
+  throw new Error(
+   "Los datos de la nube no tienen el formato esperado."
+  );
+
+ }
+
+ if(!sameUser33(uid)){
+
+  throw new Error(
+   "La cuenta cambio durante la operacion."
+  );
+
+ }
+
+ const localData=local33();
+
+ backup33(uid,localData,row.data);
+
+ setMeta33(uid,row,row.data);
+
+ localStorage.setItem(
+  KEY,
+  JSON.stringify(row.data)
+ );
+
+ status33(
+  "Datos recuperados correctamente",
+  "#426651"
+ );
+
+ location.reload();
+
+}
+
+/* DETECTAR CAMPOS EN EDICION */
+
+function editing33(){
+
+ const active=document.activeElement;
+
+ return !!(
+
+  active&&
+
+  (
+
+   ["INPUT","SELECT","TEXTAREA"]
+    .includes(active.tagName)
+
+   ||active.isContentEditable
+
+  )
+
+ );
+
+}
+
+/* SINCRONIZACION PRINCIPAL */
+
+async function sync33(manual=false){
+
+ if(busy33)return;
+
+ if(!navigator.onLine){
+
+  status33(
+   "Sin internet - datos locales",
+   "#A87935"
+  );
+
+  return;
+
+ }
+
+ if(!session32){
+
+  status33(
+   "Inicia sesion para sincronizar"
+  );
+
+  if(manual)showPage("account32");
+
+  return;
+
+ }
+
+ if(!manual&&document.hidden)return;
+
+ if(!manual&&editing33())return;
+
+ if(conflict33&&!manual)return;
+
+ busy33=true;
+
+ syncButton33.disabled=true;
+
+ status33("Sincronizando...");
+
+ try{
+
+  const uid=await user33();
+
+  const localData=local33();
+
+  if(!validData33(localData)){
+
+   throw new Error(
+    "Los datos locales no tienen el formato esperado."
+   );
+
+  }
+
+  const localSignature=
+   signature33(localData);
+
+  const meta=getMeta33();
+
+  if(meta&&meta.user!==uid){
+
+   throw new Error(
+    "Los datos locales estan vinculados con otra cuenta. No se sincronizaron."
+   );
+
+  }
+
+  const cloud=await readCloud33(uid);
+
+  if(!sameUser33(uid)){
+
+   throw new Error(
+    "La sesion cambio durante la operacion."
+   );
+
+  }
+
+  if(signature33(local33())!==localSignature){
+
+   status33(
+    "Cambios locales pendientes",
+    "#A87935"
+   );
+
+   return;
+
+  }
+
+  /* PRIMERA SINCRONIZACION */
+
+  if(!cloud){
+
+   if(!manual){
+
+    status33(
+     "Primera sincronizacion pendiente",
+     "#A87935"
+    );
+
+    return;
+
+   }
+
+   if(!confirm(
+
+    "¿Deseas guardar la informacion de este dispositivo en tu cuenta privada de Supabase?"
+
+   )){
+
+    status33(
+     "Primera sincronizacion cancelada"
+    );
+
+    return;
+
+   }
+
+   const created=await createCloud33(
+    uid,localData
+   );
+
+   setMeta33(uid,created,localData);
+
+   conflict33=false;
+
+   status33(
+    "Primera sincronizacion completada",
+    "#426651"
+   );
+
+   return;
+
+  }
+
+  if(!validData33(cloud.data)){
+
+   throw new Error(
+    "No se reconoce la estructura de los datos en la nube."
+   );
+
+  }
+
+  const cloudSignature=
+   signature33(cloud.data);
+
+  /* LOS DATOS YA COINCIDEN */
+
+  if(localSignature===cloudSignature){
+
+   setMeta33(uid,cloud,localData);
+
+   conflict33=false;
+
+   status33(
+    "Todo sincronizado",
+    "#426651"
+   );
+
+   return;
+
+  }
+
+  /* NUEVO DISPOSITIVO */
+
+  if(!meta){
+
+   conflict33=true;
+
+   status33(
+    "Dispositivo nuevo - sincronizacion pendiente",
+    "#A87935"
+   );
+
+   if(!manual)return;
+
+   if(confirm(
+
+    "Ya existen datos en tu cuenta. ¿Deseas recuperar esos datos en este dispositivo? Se creara primero un respaldo local."
+
+   )){
+
+    restoreCloud33(uid,cloud);
+
+   }
+
+   return;
+
+  }
+
+  const localChanged=
+   localSignature!==meta.baseline;
+
+  const cloudChanged=
+   Number(cloud.version)!==
+   Number(meta.version);
+
+  /* SOLO CAMBIOS LOCALES */
+
+  if(localChanged&&!cloudChanged){
+
+   const updated=await updateCloud33(
+    uid,
+    localData,
+    meta.version
+   );
+
+   setMeta33(uid,updated,localData);
+
+   conflict33=false;
+
+   status33(
+
+    signature33(local33())===localSignature?
+
+    "Todo sincronizado":
+
+    "Cambios locales pendientes",
+
+    "#426651"
+
+   );
+
+   return;
+
+  }
+
+  /* SOLO CAMBIOS EN LA NUBE */
+
+  if(!localChanged&&cloudChanged){
+
+   if(!manual){
+
+    status33(
+     "Hay datos nuevos - pulsa Sincronizar ahora",
+     "#735482"
+    );
+
+    return;
+
+   }
+
+   if(confirm(
+
+    "Hay cambios guardados desde otro dispositivo. ¿Deseas cargarlos ahora?"
+
+   )){
+
+    restoreCloud33(uid,cloud);
+
+   }
+
+   return;
+
+  }
+
+  /* CAMBIOS EN AMBOS DISPOSITIVOS */
+
+  conflict33=true;
+
+  status33(
+   "Conflicto - requiere tu confirmacion",
+   "#B66A34"
+  );
+
+  if(!manual)return;
+
+  backup33(uid,localData,cloud.data);
+
+  const useCloud=confirm(
+
+   "Hay cambios diferentes en ambos dispositivos. Se guardo un respaldo de las dos versiones.\n\nAceptar: conservar los datos de la nube.\nCancelar: revisar otras opciones."
+
+  );
+
+  if(useCloud){
+
+   restoreCloud33(uid,cloud);
+
+   return;
+
+  }
+
+  const useLocal=confirm(
+
+   "¿Quieres conservar los datos de ESTE dispositivo y reemplazar los datos de la nube?\n\nEsta operacion no combina los registros."
+
+  );
+
+  if(!useLocal){
+
+   status33(
+    "Conflicto pendiente - datos conservados",
+    "#B66A34"
+   );
+
+   return;
+
+  }
+
+  if(!sameUser33(uid)){
+
+   throw new Error(
+    "La cuenta cambio durante la operacion."
+   );
+
+  }
+
+  const updated=await updateCloud33(
+   uid,
+   localData,
+   cloud.version
+  );
+
+  setMeta33(uid,updated,localData);
+
+  conflict33=false;
+
+  status33(
+   "Conflicto resuelto - todo sincronizado",
+   "#426651"
+  );
+
+ }catch(error){
+
+  console.error(
+   "Mi Fit 45 sincronizacion:",
+   error
+  );
+
+  status33(
+   "Sincronizacion pendiente: "+
+   error.message,
+   "#B66A34"
+  );
+
+ }finally{
+
+  busy33=false;
+
+  syncButton33.disabled=false;
+
+ }
+
+}
+
+/* PROGRAMAR SINCRONIZACION */
+
+function schedule33(){
+
+ clearTimeout(timer33);
+
+ if(!navigator.onLine){
+
+  status33(
+   "Sin internet - cambios guardados localmente",
+   "#A87935"
+  );
+
+  return;
+
+ }
+
+ timer33=setTimeout(()=>{
+
+  sync33(false);
+
+ },2500);
+
+}
+
+/* DETECTAR GUARDADO LOCAL */
+
+const previousSave33=save;
+
+save=function(){
+
+ const result=previousSave33.apply(
+  this,arguments
+ );
+
+ if(result!==false){
+
+  schedule33();
+
+ }
+
+ return result;
+
+};
+
+/* OPCIONES DE CUENTA */
+
+const previousRenderAccount33=renderAccount32;
+
+renderAccount32=function(){
+
+ previousRenderAccount33();
+
+ const box=accountPage.querySelector(
+  ".fit-auth32"
+ );
+
+ if(!box)return;
+
+ const heading=document.createElement("h3");
+
+ heading.textContent="Sincronizacion";
+
+ heading.style.marginTop="25px";
+
+ box.appendChild(heading);
+
+ const meta=getMeta33();
+
+ const description=document.createElement("p");
+
+ if(meta&&meta.updatedAt){
+
+  description.textContent=
+
+   "Ultima version sincronizada: "+
+
+   new Date(meta.updatedAt)
+    .toLocaleString("es-MX");
+
+ }else{
+
+  description.textContent=
+   "Este dispositivo aun no se ha sincronizado.";
+
+ }
+
+ box.appendChild(description);
+
+ if(session32){
+
+  box.appendChild(
+
+   button32(
+    "Sincronizar ahora",
+    ()=>sync33(true)
+   )
+
+  );
+
+ }
+
+ box.appendChild(
+
+  button32(
+
+   "Exportar respaldo de registros",
+
+   ()=>exportData(),
+
+   true
+
+  )
+
+ );
+
+ if(localStorage.getItem(BACKUP33)){
+
+  box.appendChild(
+
+   button32(
+
+    "Descargar respaldo de conflicto",
+
+    downloadBackup33,
+
+    true
+
+   )
+
+  );
+
+ }
+
+};
+
+/* ACTUALIZAR INDICADOR DE CUENTA */
+
+const previousAccountButton33=
+ updateAccountButton32;
+
+updateAccountButton32=function(){
+
+ previousAccountButton33();
+
+ if(!session32){
+
+  status33(
+   "Inicia sesion para sincronizar"
+  );
+
+ }else{
+
+  schedule33();
+
+ }
+
+};
+
+/* EVENTOS DE CONEXION */
+
+window.addEventListener("online",()=>{
+
+ schedule33();
+
+});
+
+window.addEventListener("offline",()=>{
+
+ clearTimeout(timer33);
+
+ status33(
+  "Sin internet - registros locales",
+  "#A87935"
+ );
+
+});
+
+document.addEventListener(
+ "visibilitychange",
+ ()=>{
+
+  if(!document.hidden){
+
+   schedule33();
+
+  }
+
+ }
+);
+
+window.addEventListener(
+ "focus",
+ schedule33
+);
+
+/* COMPROBAR CAMBIOS PERIODICAMENTE */
+
+setInterval(()=>{
+
+ if(!document.hidden&&navigator.onLine){
+
+  sync33(false);
+
+ }
+
+},30000);
+
+/* FIN DE ACTUALIZACION 3.3 */
+
 /* INICIALIZACION */
 
 checkSession32().then(()=>{
