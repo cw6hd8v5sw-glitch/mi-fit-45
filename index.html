@@ -8958,6 +8958,628 @@ showPage("home30");
 </script>
 <!-- FIN DE ACTUALIZACION 3.1 -->
 
+<!-- MI FIT 45 - ACTUALIZACION 3.2 -->
+
+<style>
+.fit-auth32{
+ max-width:440px;
+ margin:24px auto;
+ padding:25px;
+ background:white;
+ border-radius:22px;
+ border:1px solid #E8E1EB;
+ box-shadow:0 5px 25px #48335310;
+ color:#483353;
+}
+.fit-auth32 img{
+ display:block;
+ width:85px;
+ height:85px;
+ border-radius:22px;
+ margin:0 auto 20px;
+}
+.fit-auth32 h2{
+ text-align:center;
+ margin:10px 0;
+}
+.fit-auth32 p{
+ text-align:center;
+ font-size:13px;
+ line-height:1.5;
+ color:#827789;
+}
+.fit-auth32 label{
+ display:block;
+ font-size:13px;
+ font-weight:600;
+ margin:15px 0 7px;
+}
+.fit-auth32 input{
+ box-sizing:border-box;
+ width:100%;
+ min-height:45px;
+ padding:12px;
+ font-size:16px;
+ border:1px solid #E8E1EB;
+ border-radius:10px;
+}
+.fit-auth32 button{
+ width:100%;
+ margin-top:12px;
+ min-height:46px;
+ border-radius:12px;
+}
+.fit-auth32 .password-row{
+ display:flex;
+ align-items:center;
+ gap:6px;
+}
+.fit-auth32 .password-row input{
+ flex:1;
+ min-width:0;
+}
+.fit-auth32 .password-row button{
+ width:auto;
+ margin:0;
+ padding:8px;
+ font-size:12px;
+}
+.fit-auth-status32{
+ padding:12px;
+ border-radius:10px;
+ background:#F5F3F7;
+ font-size:13px;
+ line-height:1.6;
+ overflow-wrap:anywhere;
+ margin-top:12px;
+}
+.fit-account32{
+ background:#EDF3EF;
+ color:#426651;
+ padding:10px 15px;
+ font-size:12px;
+ text-align:center;
+ cursor:pointer;
+ width:100%;
+ border:0;
+ border-radius:0;
+}
+</style>
+
+<script>
+(function(){
+"use strict";
+
+const SUPABASE_URL =
+ "https://tgnudejblhgwifddgpcd.supabase.co";
+
+const SUPABASE_KEY =
+ "sb_publishable_KLcvPsdaekv2gOaZDbr-Sg_O1yzOb8M";
+
+let client32=null;
+let session32=null;
+let verified32=false;
+let initializing32=null;
+
+const version=document.querySelector(".fit-version");
+
+if(version){
+ version.textContent="Version 3.2";
+}
+
+/* PANTALLA DE CUENTA */
+
+const accountPage=document.createElement("section");
+
+accountPage.id="account32";
+accountPage.className="hidden";
+
+document.querySelector("main")
+ .appendChild(accountPage);
+
+const accountButton=document.createElement("button");
+
+accountButton.type="button";
+accountButton.className="fit-account32";
+accountButton.textContent="Mi cuenta privada";
+
+document.querySelector("header")
+ .after(accountButton);
+
+accountButton.onclick=()=>{
+ showPage("account32");
+};
+
+/* NAVEGACION */
+
+const previousPage32=showPage;
+
+showPage=function(id){
+
+ if(id==="account32"){
+
+  document.querySelectorAll("main > section")
+   .forEach(s=>s.classList.add("hidden"));
+
+  accountPage.classList.remove("hidden");
+
+  renderAccount32();
+
+  window.scrollTo(0,0);
+
+ }else{
+
+  accountPage.classList.add("hidden");
+
+  previousPage32(id);
+
+ }
+
+};
+
+/* CONEXION CON SUPABASE */
+
+async function initialize32(){
+
+ if(client32)return client32;
+
+ if(initializing32)return initializing32;
+
+ initializing32=(async()=>{
+
+  if(!navigator.onLine){
+
+   throw new Error(
+    "Conéctate a internet para acceder a tu cuenta."
+   );
+
+  }
+
+  if(!window.supabase){
+
+   await new Promise((resolve,reject)=>{
+
+    const script=document.createElement("script");
+
+    script.src=
+     "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+
+    script.onload=resolve;
+
+    script.onerror=()=>{
+
+     script.remove();
+
+     reject(new Error(
+      "No se pudo cargar la conexión con Supabase."
+     ));
+
+    };
+
+    document.head.appendChild(script);
+
+   });
+
+  }
+
+  client32=window.supabase.createClient(
+   SUPABASE_URL,
+   SUPABASE_KEY,
+   {
+    auth:{
+     persistSession:true,
+     autoRefreshToken:true,
+     detectSessionInUrl:false,
+     storageKey:"mi_fit_45_auth32"
+    }
+   }
+  );
+
+  client32.auth.onAuthStateChange(
+   (event,session)=>{
+
+    session32=session;
+
+    if(event==="SIGNED_OUT"){
+     verified32=false;
+    }
+
+    updateAccountButton32();
+
+   }
+  );
+
+  return client32;
+
+ })();
+
+ try{
+
+  return await initializing32;
+
+ }finally{
+
+  initializing32=null;
+
+ }
+
+}
+
+/* VERIFICAR SESION */
+
+async function checkSession32(){
+
+ verified32=false;
+
+ try{
+
+  const client=await initialize32();
+
+  const result=await client.auth.getSession();
+
+  if(result.error)throw result.error;
+
+  session32=result.data.session;
+
+  if(session32&&navigator.onLine){
+
+   const check=await client.auth.getUser();
+
+   verified32=
+    !check.error&&!!check.data.user;
+
+  }
+
+ }catch(error){
+
+  console.warn("Mi Fit 45:",error.message);
+
+ }
+
+ updateAccountButton32();
+
+}
+
+/* ESTADO DE CUENTA */
+
+function updateAccountButton32(){
+
+ if(!navigator.onLine){
+
+  accountButton.textContent=
+   "Sin internet · Registros locales";
+
+ }else if(session32&&verified32){
+
+  accountButton.textContent=
+   "Cuenta privada conectada · Mi Fit 45";
+
+ }else if(session32){
+
+  accountButton.textContent=
+   "Cuenta pendiente de verificar";
+
+ }else{
+
+  accountButton.textContent=
+   "Mi cuenta privada · Iniciar sesión";
+
+ }
+
+}
+
+/* ELEMENTOS DE INTERFAZ */
+
+function el32(tag,text,cls){
+
+ const element=document.createElement(tag);
+
+ if(text!==undefined){
+  element.textContent=text;
+ }
+
+ if(cls)element.className=cls;
+
+ return element;
+
+}
+
+function button32(text,fn,secondary=false){
+
+ const b=el32(
+  "button",
+  text,
+  secondary?"secondary":""
+ );
+
+ b.type="button";
+ b.onclick=fn;
+
+ return b;
+
+}
+
+/* PANTALLA PRINCIPAL DE CUENTA */
+
+function renderAccount32(){
+
+ accountPage.replaceChildren();
+
+ const box=el32("div",undefined,"fit-auth32");
+
+ const logo=document.createElement("img");
+
+ logo.src="./icon-180.png";
+ logo.alt="Mi Fit 45";
+
+ box.appendChild(logo);
+
+ const message=el32(
+  "div",
+  "",
+  "fit-auth-status32"
+ );
+
+ if(session32&&verified32&&navigator.onLine){
+
+  box.append(
+   el32("h2","Mi cuenta privada"),
+
+   el32("p","Sesión iniciada correctamente."),
+
+   el32(
+    "p",
+    session32.user.email||"Cuenta personal"
+   )
+  );
+
+  message.textContent=
+   "Cuenta conectada. Tus registros siguen almacenados en este dispositivo. La sincronización todavía no está activa.";
+
+  box.appendChild(message);
+
+  box.appendChild(
+   button32(
+    "Continuar a Mi Fit 45",
+    ()=>showPage("home30")
+   )
+  );
+
+  const logout=button32(
+   "Cerrar sesión",
+   async()=>{
+
+    if(!confirm(
+     "¿Quieres cerrar sesión en este dispositivo? Tus registros locales se conservarán."
+    ))return;
+
+    logout.disabled=true;
+
+    try{
+
+     const result=
+      await client32.auth.signOut({
+       scope:"local"
+      });
+
+     if(result.error)throw result.error;
+
+     session32=null;
+     verified32=false;
+
+     updateAccountButton32();
+     renderAccount32();
+
+    }catch(error){
+
+     message.textContent=
+      "No se pudo completar el cierre de sesión. "+error.message;
+
+     logout.disabled=false;
+
+    }
+
+   },
+   true
+  );
+
+  box.appendChild(logout);
+
+ }else{
+
+  box.append(
+   el32("h2","¡Bienvenida!"),
+
+   el32("p",
+    "Mi fuerza. Mi equilibrio. Mi bienestar.")
+  );
+
+  const form=document.createElement("form");
+
+  const emailLabel=el32(
+   "label","Correo electrónico"
+  );
+
+  emailLabel.htmlFor="fitEmail32";
+
+  const email=document.createElement("input");
+
+  email.id="fitEmail32";
+  email.type="email";
+  email.autocomplete="username";
+  email.placeholder="Tu correo electrónico";
+  email.required=true;
+
+  const passwordLabel=el32(
+   "label","Contraseña"
+  );
+
+  passwordLabel.htmlFor="fitPassword32";
+
+  const password=document.createElement("input");
+
+  password.id="fitPassword32";
+  password.type="password";
+  password.autocomplete="current-password";
+  password.placeholder="Tu contraseña";
+  password.required=true;
+
+  const passRow=el32(
+   "div",
+   undefined,
+   "password-row"
+  );
+
+  const toggle=button32(
+   "Mostrar",
+   ()=>{
+
+    const visible=password.type==="text";
+
+    password.type=visible?"password":"text";
+
+    toggle.textContent=
+     visible?"Mostrar":"Ocultar";
+
+   },
+   true
+  );
+
+  passRow.append(password,toggle);
+
+  const login=el32(
+   "button",
+   "Iniciar sesión"
+  );
+
+  login.type="submit";
+
+  login.disabled=!navigator.onLine;
+
+  form.append(
+   emailLabel,
+   email,
+   passwordLabel,
+   passRow,
+   login
+  );
+
+  message.textContent=navigator.onLine?
+   "Utiliza la cuenta que creaste en Supabase.":
+   "Sin conexión. Puedes continuar utilizando tus registros locales.";
+
+  form.onsubmit=async event=>{
+
+   event.preventDefault();
+
+   login.disabled=true;
+
+   message.textContent=
+    "Verificando tu cuenta...";
+
+   try{
+
+    const client=await initialize32();
+
+    const result=
+     await client.auth.signInWithPassword({
+      email:email.value.trim(),
+      password:password.value
+     });
+
+    password.value="";
+
+    if(result.error)throw result.error;
+
+    session32=result.data.session;
+
+    const check=await client.auth.getUser();
+
+    if(check.error)throw check.error;
+
+    verified32=!!check.data.user;
+
+    if(!verified32){
+
+     throw new Error(
+      "No fue posible verificar la cuenta."
+     );
+
+    }
+
+    updateAccountButton32();
+    renderAccount32();
+
+   }catch(error){
+
+    password.value="";
+
+    message.textContent=
+     "No se pudo iniciar sesión. Revisa tus datos y conexión. "+error.message;
+
+    login.disabled=false;
+
+   }
+
+  };
+
+  box.append(form,message);
+
+  box.appendChild(
+   button32(
+    "Continuar en modo local",
+    ()=>showPage("home30"),
+    true
+   )
+  );
+
+ }
+
+ box.appendChild(
+  el32("p","Mi Fit 45 · Versión 3.2")
+ );
+
+ accountPage.appendChild(box);
+
+}
+
+/* CONEXION Y RECONEXION */
+
+window.addEventListener("online",async()=>{
+
+ await checkSession32();
+
+ if(!accountPage.classList.contains("hidden")){
+  renderAccount32();
+ }
+
+});
+
+window.addEventListener("offline",()=>{
+
+ updateAccountButton32();
+
+ if(!accountPage.classList.contains("hidden")){
+  renderAccount32();
+ }
+
+});
+
+/* INICIALIZACION */
+
+checkSession32().then(()=>{
+
+ if(!accountPage.classList.contains("hidden")){
+  renderAccount32();
+ }
+
+});
+
+})();
+</script>
+
+<!-- FIN DE ACTUALIZACION 3.2 -->
+
 </body>
 </html> 
  
