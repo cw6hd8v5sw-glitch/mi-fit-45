@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iconos Mi Fit 45</title>
+<style>
+body{
+ background:#F5F3F7;
+ font-family:Arial,sans-serif;
+ text-align:center;
+ padding:30px;
+ color:#483353;
+}
+img{
+ width:180px;
+ border-radius:35px;
+ margin:20px;
+}
+button{
+ display:block;
+ margin:12px auto;
+ padding:15px 25px;
+ background:#483353;
+ color:white;
+ border:0;
+ border-radius:12px;
+ font-size:16px;
+ cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<h1>Mi Fit 45</h1>
+<p>Generador de iconos oficiales</p>
+
+<img src="icon.svg" alt="Mi Fit 45">
+
+<button onclick="downloadIcon(180)">
+ Descargar icon-180.png
+</button>
+
+<button onclick="downloadIcon(192)">
+ Descargar icon-192.png
+</button>
+
+<button onclick="downloadIcon(512)">
+ Descargar icon-512.png
+</button>
+
+<script>
+function downloadIcon(size){
+
+ const img=new Image();
+
+ img.onload=function(){
+
+  const canvas=document.createElement("canvas");
+
+  canvas.width=size;
+  canvas.height=size;
+
+  const ctx=canvas.getContext("2d");
+
+  ctx.fillStyle="#483353";
+  ctx.fillRect(0,0,size,size);
+  ctx.drawImage(img,0,0,size,size);
+
+  canvas.toBlob(function(blob){
+
+   if(!blob){
+    alert("No se pudo generar el icono.");
+    return;
+   }
+
+   const url=URL.createObjectURL(blob);
+
+   const a=document.createElement("a");
+
+   a.href=url;
+   a.download="icon-"+size+".png";
+
+   document.body.appendChild(a);
+   a.click();
+   a.remove();
+
+   setTimeout(()=>{
+    URL.revokeObjectURL(url);
+   },5000);
+
+  },"image/png");
+ };
+
+ img.onerror=function(){
+  alert("No se encontró el archivo icon.svg.");
+ };
+
+ img.src="./icon.svg";
+}
+</script>
+
+</body>
+</html>
