@@ -4775,6 +4775,995 @@ freezeCompleted26();
 save();
 
 /* FIN DE ACTUALIZACION 2.6 */
+ 
+/* MI FIT 45 - ACTUALIZACION 2.7 */
+
+if(version)version.textContent="Version 2.7";
+
+const style27=document.createElement("style");
+
+style27.textContent=`
+.fit-admin27{
+ background:#fff;
+ border-radius:20px;
+ padding:18px;
+ margin-bottom:15px;
+}
+.fit-admin27 h3{
+ color:#483353;
+}
+.fit-grid27{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
+}
+.fit-item27{
+ padding:14px 0;
+ border-bottom:1px solid #eee;
+}
+.fit-item27 small{
+ display:block;
+ margin:5px 0;
+}
+.fit-admin27 details{
+ background:#f7f4fa;
+ border-radius:12px;
+ padding:14px;
+ margin:12px 0;
+}
+.fit-admin27 summary{
+ cursor:pointer;
+ color:#735482;
+ font-weight:bold;
+}
+.fit-ingredient27{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 80px 38px;
+ gap:6px;
+ align-items:center;
+ margin:8px 0;
+}
+.fit-ingredient27 input{
+ margin:0;
+ min-width:0;
+}
+.fit-ingredient27 button{
+ padding:10px 4px;
+}
+.fit-admin27 textarea{
+ width:100%;
+ min-height:100px;
+ padding:12px;
+ border:1px solid #ddd;
+ border-radius:10px;
+ font:inherit;
+ font-size:16px;
+ margin:10px 0;
+}
+.fit-admin27 button{
+ margin-top:8px;
+}
+`;
+
+document.head.appendChild(style27);
+
+function catalog27(){
+ const n=nutrition();
+
+ if(!n.catalog27){
+ n.catalog27={
+ foods:{},
+ recipes:{},
+ archived:[]
+ };
+ }
+
+ return n.catalog27;
+}
+
+function addFood27(id,name,unit,store,kcal,p,c,f,factor=1){
+ foods[id]=[
+ name,unit,store,
+ unit==="pzas"?kcal:kcal/100,
+ factor
+ ];
+
+ macro25[id]=[p,c,f];
+}
+
+addFood27(
+ "mushroom","Champiñones","g",
+ "Alsuper",22,3.1,3.3,0.3
+);
+
+addFood27(
+ "pepper","Pimiento morrón","g",
+ "Alsuper",31,1,6,0.3
+);
+
+addFood27(
+ "onion","Cebolla","g",
+ "Alsuper",40,1.1,9.3,0.1
+);
+
+addFood27(
+ "mozzarella","Queso mozzarella","g",
+ "Alsuper",280,28,3,17
+);
+
+addFood27(
+ "lettuce","Lechuga","g",
+ "Alsuper",15,1.4,2.9,0.2
+);
+
+addFood27(
+ "tostada","Tostadas de maíz horneadas","g",
+ "Alsuper",400,8,80,6
+);
+
+function registerRecipe27(id,recipe,slots){
+ originalMeals26[id]=recipe;
+ meals25[id]=recipe;
+
+ slots.forEach(index=>{
+ if(!alternatives25[index].includes(id)){
+ alternatives25[index].push(id);
+ }
+ });
+}
+
+registerRecipe27("pancakes27",{
+ title:"Hot cakes de avena y plátano",
+ items:[
+ ["oats",40],["eggs",1],
+ ["whites",100],["banana",70],
+ ["yogurt",100],["oil",3]
+ ],
+ prep:"Licúa avena, huevo, claras y plátano. Cocina porciones pequeñas en un sartén antiadherente con aceite. Sirve con yogur natural."
+},[0,3]);
+
+registerRecipe27("omelette27",{
+ title:"Omelette con champiñones",
+ items:[
+ ["eggs",1],["whites",180],
+ ["mushroom",100],["spinach",50],
+ ["bread",60],["oil",5]
+ ],
+ prep:"Saltea los champiñones y las espinacas. Agrega el huevo y las claras. Cocina completamente y acompaña con pan integral."
+},[0,3]);
+
+registerRecipe27("eggAvocado27",{
+ title:"Tostadas de huevo y aguacate",
+ items:[
+ ["eggs",1],["whites",150],
+ ["tostada",35],["avocado",40],
+ ["tomato",80]
+ ],
+ prep:"Cocina el huevo y las claras. Sirve sobre tostadas horneadas con aguacate y tomate."
+},[0,1,3]);
+
+registerRecipe27("fajitas27",{
+ title:"Fajitas de res",
+ items:[
+ ["beef",150],["pepper",100],
+ ["onion",50],["tortilla",75],
+ ["avocado",35],["oil",5]
+ ],
+ prep:"Corta el bistec en tiras y cocina en sartén. Agrega pimiento y cebolla. Sirve con tortillas y aguacate."
+},[2]);
+
+registerRecipe27("picadillo27",{
+ title:"Picadillo de res con papas",
+ items:[
+ ["ground",140],["potato",200],
+ ["carrot",80],["tomato",100],
+ ["onion",30],["oil",5]
+ ],
+ prep:"Cocina completamente la carne molida con cebolla y tomate. Agrega papa y zanahoria previamente cocidas. Deja reducir el líquido hasta obtener un picadillo seco."
+},[2]);
+
+registerRecipe27("porkMedallions27",{
+ title:"Medallones de cerdo",
+ items:[
+ ["pork",150],["sweet",200],
+ ["zucchini",150],["mushroom",80],
+ ["oil",8]
+ ],
+ prep:"Cocina los medallones de lomo en sartén. Acompaña con camote asado, calabacitas y champiñones salteados."
+},[2]);
+
+registerRecipe27("chickenTostadas27",{
+ title:"Tostadas de pollo",
+ items:[
+ ["chicken",120],["tostada",40],
+ ["beans",60],["lettuce",50],
+ ["tomato",80],["avocado",35]
+ ],
+ prep:"Deshebra el pollo cocido. Unta frijoles en las tostadas y agrega pollo, lechuga, tomate y aguacate."
+},[1,2,3]);
+
+registerRecipe27("quesadilla27",{
+ title:"Quesadillas de pollo",
+ items:[
+ ["chicken",100],["mozzarella",35],
+ ["tortilla",60],["pepper",80]
+ ],
+ prep:"Rellena las tortillas con pollo cocido, mozzarella y pimiento. Calienta en comal hasta derretir el queso."
+},[1,3]);
+
+const baselineFoods27=Object.keys(foods);
+const baselineRecipes27=Object.keys(originalMeals26);
+
+function hydrate27(){
+ const cat=catalog27();
+
+ Object.keys(foods).forEach(id=>{
+ if(!baselineFoods27.includes(id)){
+ delete foods[id];
+ delete macro25[id];
+ }
+ });
+
+ Object.keys(originalMeals26).forEach(id=>{
+ if(!baselineRecipes27.includes(id)){
+ delete originalMeals26[id];
+ delete meals25[id];
+ }
+ });
+
+ alternatives25.forEach(list=>{
+ for(let i=list.length-1;i>=0;i--){
+ if(!baselineRecipes27.includes(list[i])){
+ list.splice(i,1);
+ }
+ }
+ });
+
+ Object.entries(cat.foods).forEach(([id,f])=>{
+ addFood27(
+ id,f.name,f.unit,f.store,
+ f.kcal,f.protein,f.carbs,f.fat,
+ f.factor||1
+ );
+ });
+
+ Object.entries(cat.recipes).forEach(([id,r])=>{
+ registerRecipe27(
+ id,
+ {
+ title:r.title,
+ items:r.items,
+ prep:r.prep
+ },
+ r.slots
+ );
+ });
+}
+
+function unique27(prefix){
+ return prefix+Date.now().toString(36)+
+ Math.random().toString(36).slice(2,8);
+}
+
+const allowedPrevious27=allowedMeal26;
+
+allowedMeal26=function(id){
+ if(!allowedPrevious27(id))return false;
+
+ if(catalog27().archived.includes(id)){
+ return false;
+ }
+
+ const excluded=
+ preferences26().customExcluded
+ .map(normalize26)
+ .filter(Boolean);
+
+ const recipe=originalMeals26[id];
+
+ return recipe.items.every(([food])=>{
+ const name=normalize26(
+ foods[food]?.[0]||""
+ );
+
+ return !excluded.some(value=>
+ name.includes(value)
+ );
+ });
+};
+
+function field27(parent,label,type,placeholder,value=""){
+ parent.appendChild(
+ el("label","",label)
+ );
+
+ const input=el("input");
+ input.type=type;
+ input.placeholder=placeholder;
+ input.value=value;
+
+ if(type==="number"){
+ input.min="0";
+ input.step="0.1";
+ }
+
+ parent.appendChild(input);
+
+ return input;
+}
+
+function select27(parent,label,options){
+ parent.appendChild(el("label","",label));
+
+ const select=el("select");
+
+ options.forEach(([value,text])=>{
+ const option=el("option","",text);
+ option.value=value;
+ select.appendChild(option);
+ });
+
+ parent.appendChild(select);
+
+ return select;
+}
+
+function adminCard27(title){
+ const c=el("div","fit-admin27");
+ c.appendChild(el("h3","",title));
+ return c;
+}
+
+function renderCatalog27(){
+ const c=adminCard27("Mi catálogo de alimentos");
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Registra los valores de la etiqueta del producto. Usa la misma presentación que pesarás al preparar tus recetas."
+ ));
+
+ const name=field27(
+ c,"Nombre del alimento",
+ "text","Ej. Yogur griego natural"
+ );
+
+ const brand=field27(
+ c,"Marca (opcional)",
+ "text","Ej. Fage"
+ );
+
+ const unit=select27(
+ c,"Unidad de medida",[
+ ["g","Gramos"],
+ ["ml","Mililitros"],
+ ["pzas","Piezas"]
+ ]
+ );
+
+ const store=select27(
+ c,"Lugar de compra",[
+ ["Alsuper","Alsuper"],
+ ["Carnicería","Carnicería"]
+ ]
+ );
+
+ const basis=el("p","fit-food-note",
+ "Información nutricional por 100 g"
+ );
+
+ c.appendChild(basis);
+
+ unit.onchange=()=>{
+ basis.textContent=
+ unit.value==="pzas"?
+ "Información nutricional por pieza":
+ "Información nutricional por 100 "+
+ unit.value;
+ };
+
+ const grid=el("div","fit-grid27");
+
+ const energyBox=el("div");
+ const proteinBox=el("div");
+ const carbsBox=el("div");
+ const fatBox=el("div");
+
+ const kcal=field27(
+ energyBox,"Calorías (kcal)",
+ "number","0"
+ );
+
+ const protein=field27(
+ proteinBox,"Proteína (g)",
+ "number","0"
+ );
+
+ const carbs=field27(
+ carbsBox,"Carbohidratos (g)",
+ "number","0"
+ );
+
+ const fat=field27(
+ fatBox,"Grasas (g)",
+ "number","0"
+ );
+
+ grid.append(
+ energyBox,proteinBox,
+ carbsBox,fatBox
+ );
+
+ c.appendChild(grid);
+
+ const factor=field27(
+ c,
+ "Factor de compra (opcional)",
+ "number","1","1"
+ );
+
+ factor.min="0.01";
+ factor.step="0.01";
+
+ c.appendChild(el(
+ "small","",
+ "Usa 1 cuando el peso de compra sea igual al de la receta. Ejemplo: 1.33 para convertir carne cocida a peso crudo aproximado."
+ ));
+
+ c.appendChild(button(
+ "Guardar alimento",()=>{
+ const inputs=[
+ kcal,protein,carbs,fat
+ ];
+
+ if(!name.value.trim()||
+ inputs.some(input=>
+ input.value===""||
+ !Number.isFinite(Number(input.value))||
+ Number(input.value)<0
+ )){
+ alert("Completa todos los valores nutricionales.");
+ return;
+ }
+
+ const conversion=Number(factor.value||1);
+
+ if(!Number.isFinite(conversion)||
+ conversion<=0){
+ alert("Revisa el factor de compra.");
+ return;
+ }
+
+ if(Number(kcal.value)>1000||
+ (
+ unit.value!=="pzas"&&
+ (
+ Number(protein.value)+
+ Number(carbs.value)+
+ Number(fat.value)>105
+ )
+ )){
+ alert("Revisa que los datos sean por 100 g, 100 ml o por pieza, según corresponda.");
+ return;
+ }
+
+ const id=unique27("food27_");
+
+ catalog27().foods[id]={
+ name:name.value.trim()+
+ (brand.value.trim()?
+ " - "+brand.value.trim():""),
+ unit:unit.value,
+ store:store.value,
+ kcal:Number(kcal.value),
+ protein:Number(protein.value),
+ carbs:Number(carbs.value),
+ fat:Number(fat.value),
+ factor:conversion
+ };
+
+ hydrate27();
+
+ if(save()){
+ alert("Alimento guardado");
+ }
+
+ renderFood();
+ }
+ ));
+
+ c.appendChild(el(
+ "h3","","Alimentos registrados"
+ ));
+
+ const search=el("input");
+ search.type="search";
+ search.placeholder="Buscar en mi catálogo";
+
+ c.appendChild(search);
+
+ const list=el("div");
+ c.appendChild(list);
+
+ function draw(){
+ list.replaceChildren();
+
+ const query=normalize26(search.value);
+
+ Object.entries(foods)
+ .sort((a,b)=>
+ a[1][0].localeCompare(b[1][0])
+ )
+ .forEach(([id,f])=>{
+ if(!normalize26(f[0]).includes(query)){
+ return;
+ }
+
+ const item=el("div","fit-item27");
+ const basis=f[1]==="pzas"?1:100;
+ const macros=macro25[id]||[0,0,0];
+
+ item.append(
+ el("strong","",f[0]),
+
+ el("small","",
+ Math.round(f[3]*basis)+
+ " kcal por "+
+ (basis===1?"pieza":"100 "+f[1])),
+
+ el("small","",
+ "P: "+macros[0]+
+ " g · C: "+macros[1]+
+ " g · G: "+macros[2]+" g"),
+
+ el("small","",f[2])
+ );
+
+ if(catalog27().foods[id]){
+ item.appendChild(el(
+ "small","",
+ "Producto agregado por ti"
+ ));
+ }
+
+ list.appendChild(item);
+ });
+ }
+
+ search.oninput=draw;
+ draw();
+
+ section.appendChild(c);
+}
+
+function renderRecipeEditor27(){
+ const c=adminCard27("Crear mi propia receta");
+
+ const name=field27(
+ c,"Nombre de la receta",
+ "text","Ej. Bistec con ejotes"
+ );
+
+ const categories=[
+ [0,"Desayuno"],
+ [1,"Segunda comida"],
+ [2,"Comida principal"],
+ [3,"Cena"]
+ ];
+
+ const slots=new Set([2]);
+
+ c.appendChild(el(
+ "p","","¿En qué comidas quieres utilizarla?"
+ ));
+
+ categories.forEach(([index,label])=>{
+ const row=el("label","fit-food-check");
+ const check=el("input");
+
+ check.type="checkbox";
+ check.checked=slots.has(index);
+
+ check.onchange=()=>{
+ if(check.checked)slots.add(index);
+ else slots.delete(index);
+ };
+
+ row.append(check,el("span","",label));
+ c.appendChild(row);
+ });
+
+ c.appendChild(el("h3","","Ingredientes"));
+
+ const picker=select27(
+ c,"Seleccionar alimento",
+ Object.entries(foods)
+ .sort((a,b)=>
+ a[1][0].localeCompare(b[1][0])
+ )
+ .map(([id,f])=>[id,f[0]])
+ );
+
+ const quantity=field27(
+ c,"Cantidad",
+ "number","100"
+ );
+
+ quantity.min="0.1";
+
+ const unitLabel=el("small");
+
+ function showUnit(){
+ unitLabel.textContent=
+ "Unidad: "+foods[picker.value][1];
+ }
+
+ picker.onchange=showUnit;
+ showUnit();
+
+ c.appendChild(unitLabel);
+
+ let ingredients=[];
+
+ const list=el("div");
+
+ const summary=el(
+ "div","fit-food-note"
+ );
+
+ function drawIngredients(){
+ list.replaceChildren();
+
+ ingredients.forEach((item,index)=>{
+ const [id,qty]=item;
+
+ const row=el(
+ "div","fit-ingredient27"
+ );
+
+ const label=el(
+ "span","",foods[id][0]
+ );
+
+ const input=el("input");
+
+ input.type="number";
+ input.min="0.1";
+ input.step="0.1";
+ input.value=qty;
+
+ input.onchange=()=>{
+ const number=Number(input.value);
+
+ if(!Number.isFinite(number)||
+ number<=0){
+ input.value=item[1];
+ return;
+ }
+
+ ingredients[index][1]=number;
+ drawIngredients();
+ };
+
+ const remove=button("×",()=>{
+ ingredients.splice(index,1);
+ drawIngredients();
+ },true);
+
+ row.append(label,input,remove);
+ list.appendChild(row);
+ });
+
+ const m=macros26({items:ingredients});
+
+ summary.textContent=
+ Math.round(m.kcal)+" kcal · "+
+ formatMacros26(m);
+ }
+
+ c.appendChild(button(
+ "Agregar ingrediente",()=>{
+ const qty=Number(quantity.value);
+
+ if(!Number.isFinite(qty)||qty<=0){
+ alert("Introduce una cantidad válida.");
+ return;
+ }
+
+ const id=picker.value;
+
+ const existing=ingredients.find(
+ item=>item[0]===id
+ );
+
+ if(existing)existing[1]+=qty;
+ else ingredients.push([id,qty]);
+
+ quantity.value="";
+ drawIngredients();
+ },true));
+
+ c.append(list,summary);
+ drawIngredients();
+
+ c.appendChild(el(
+ "label","","Modo de preparación"
+ ));
+
+ const prep=el("textarea");
+ prep.placeholder=
+ "Escribe cómo preparas esta receta";
+
+ c.appendChild(prep);
+
+ c.appendChild(button(
+ "Guardar mi receta",()=>{
+ if(!name.value.trim()||
+ !ingredients.length||
+ !slots.size||
+ !prep.value.trim()){
+ alert("Completa el nombre, ingredientes, preparación y tipo de comida.");
+ return;
+ }
+
+ const id=unique27("recipe27_");
+
+ catalog27().recipes[id]={
+ title:name.value.trim(),
+ items:JSON.parse(
+ JSON.stringify(ingredients)
+ ),
+ prep:prep.value.trim(),
+ slots:Array.from(slots)
+ };
+
+ hydrate27();
+
+ if(save()){
+ alert("Receta guardada. Ya está disponible para los menús compatibles.");
+ }
+
+ renderFood();
+ }
+ ));
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Las cantidades deben corresponder a una porción individual. Los menús podrán ajustarlas según tu referencia nutricional."
+ ));
+
+ section.appendChild(c);
+}
+
+function renderRecipes27(){
+ const c=adminCard27("Mi recetario");
+
+ const all=Object.entries(originalMeals26);
+
+ c.appendChild(el(
+ "p","",
+ all.length+" recetas disponibles"
+ ));
+
+ const search=el("input");
+ search.type="search";
+ search.placeholder="Buscar receta";
+
+ c.appendChild(search);
+
+ const list=el("div");
+ c.appendChild(list);
+
+ function draw(){
+ list.replaceChildren();
+
+ const query=normalize26(search.value);
+
+ Object.entries(originalMeals26)
+ .sort((a,b)=>
+ a[1].title.localeCompare(b[1].title)
+ )
+ .forEach(([id,recipe])=>{
+ if(!normalize26(recipe.title)
+ .includes(query)){
+ return;
+ }
+
+ const details=el("details");
+ const summary=el("summary","",recipe.title);
+
+ details.appendChild(summary);
+
+ const m=macros26(recipe);
+
+ details.append(
+ el("p","",Math.round(m.kcal)+" kcal"),
+ el("small","",formatMacros26(m))
+ );
+
+ recipe.items.forEach(([food,qty])=>{
+ const f=foods[food];
+
+ const row=el(
+ "div","fit-food-ingredient"
+ );
+
+ row.append(
+ el("span","",f[0]),
+ el("strong","",qty+" "+f[1])
+ );
+
+ details.appendChild(row);
+ });
+
+ details.appendChild(el(
+ "p","fit-food-note",recipe.prep
+ ));
+
+ const archived=
+ catalog27().archived.includes(id);
+
+ details.appendChild(el(
+ "p","",
+ archived?
+ "Receta desactivada":
+ allowedMeal26(id)?
+ "Compatible con tus preferencias":
+ "Contiene ingredientes excluidos"
+ ));
+
+ details.appendChild(button(
+ archived?
+ "Activar receta":
+ "Desactivar receta",
+ ()=>{
+ freezeCompleted26();
+
+ const a=new Set(
+ catalog27().archived
+ );
+
+ if(a.has(id))a.delete(id);
+ else a.add(id);
+
+ catalog27().archived=
+ Array.from(a);
+
+ nutrition().shopping={};
+
+ save();
+ draw();
+ },true));
+
+ const compatibleSlots=
+ alternatives25
+ .map((items,i)=>
+ items.includes(id)?i:-1
+ )
+ .filter(i=>i>=0);
+
+ if(allowedMeal26(id)){
+ compatibleSlots.forEach(index=>{
+ details.appendChild(button(
+ "Usar en "+mealNames[index],
+ ()=>{
+ if(daily().done[index]){
+ alert("Esta comida ya está registrada.");
+ return;
+ }
+
+ daily().choices[index]=id;
+
+ delete snapshots26()[
+ foodDate+"-"+index
+ ];
+
+ nutrition().shopping={};
+
+ save();
+ foodTab="menu";
+ renderFood();
+ },true));
+ });
+ }
+
+ list.appendChild(details);
+ });
+ }
+
+ search.oninput=draw;
+ draw();
+
+ section.appendChild(c);
+
+ renderRecipeEditor27();
+}
+
+const previousRenderFood27=renderFood;
+
+renderFood=function(){
+ hydrate27();
+
+ if(
+ foodTab==="catalog27"||
+ foodTab==="recipes27"
+ ){
+ section.replaceChildren();
+
+ const banner=el(
+ "div","fit-food-banner"
+ );
+
+ banner.append(
+ el("small","","Mi Fit 45"),
+ el("h2","","Mis alimentos y recetas")
+ );
+
+ section.appendChild(banner);
+
+ const controls=el(
+ "div","fit-food-actions"
+ );
+
+ controls.append(
+ button("Volver al menú",()=>{
+ foodTab="menu";
+ renderFood();
+ },true),
+
+ button("Alimentos",()=>{
+ foodTab="catalog27";
+ renderFood();
+ },foodTab!=="catalog27"),
+
+ button("Recetas",()=>{
+ foodTab="recipes27";
+ renderFood();
+ },foodTab!=="recipes27")
+ );
+
+ section.appendChild(controls);
+
+ if(foodTab==="catalog27"){
+ renderCatalog27();
+ }else{
+ renderRecipes27();
+ }
+
+ return;
+ }
+
+ previousRenderFood27();
+
+ const controls=el(
+ "div","fit-food-actions"
+ );
+
+ controls.style.marginBottom="15px";
+
+ controls.append(
+ button("Mi catálogo",()=>{
+ foodTab="catalog27";
+ renderFood();
+ },true),
+
+ button("Mi recetario",()=>{
+ foodTab="recipes27";
+ renderFood();
+ },true)
+ );
+
+ const tabs=section.querySelector(
+ ".fit-food-tabs"
+ );
+
+ if(tabs)tabs.after(controls);
+};
+
+hydrate27();
+save();
+
+/* FIN DE ACTUALIZACION 2.7 */
+
 
 nutrition();
 save();
