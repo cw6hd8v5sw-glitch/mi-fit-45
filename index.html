@@ -7809,5 +7809,1080 @@ save();
 })();
 </script>
 <!-- FIN DE ACTUALIZACION 2.5 -->
- 
+
+<!-- MI FIT 45 - ACTUALIZACION 3.0 -->
+<style>
+:root{
+ --fit-primary:#735482;
+ --fit-dark:#483353;
+ --fit-sage:#83AD99;
+ --fit-bg:#F5F3F7;
+ --fit-muted:#827789;
+ --fit-border:#E8E1EB;
+}
+body{
+ background:var(--fit-bg);
+ color:#302A34;
+ font-family:-apple-system,BlinkMacSystemFont,
+ "Segoe UI",Arial,sans-serif;
+ -webkit-tap-highlight-color:transparent;
+}
+header{
+ background:#483353;
+ padding:22px 20px;
+}
+header h1{
+ font-size:27px;
+ font-weight:750;
+ letter-spacing:-.8px;
+}
+header p{
+ font-size:12px;
+ opacity:.85;
+}
+main{
+ max-width:800px;
+ padding:16px 14px 110px;
+}
+button{
+ min-height:44px;
+ background:var(--fit-primary);
+ font-weight:600;
+}
+button.secondary{
+ background:#F0EAF3;
+ color:var(--fit-primary);
+}
+input,select,textarea{
+ border:1px solid var(--fit-border);
+ border-radius:12px;
+}
+.card,.fit-food,.fit-library,
+.fit-dashboard,.fit-admin27,.fit-balance29,
+.fit-equipment{
+ border:1px solid #EDE8EF;
+ border-radius:20px;
+ box-shadow:0 3px 14px #48335306;
+}
+nav{
+ background:#fff;
+ border-top:1px solid var(--fit-border);
+ padding-top:4px;
+ padding-bottom:env(safe-area-inset-bottom);
+}
+nav button{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ flex-direction:column;
+ gap:5px;
+ font-size:11px;
+ padding:10px 2px;
+ background:transparent;
+ color:#8A8190;
+ border-radius:0;
+}
+nav button.active30{
+ color:var(--fit-primary);
+ font-weight:750;
+}
+nav svg{
+ width:23px;
+ height:23px;
+ stroke:currentColor;
+ stroke-width:1.8;
+ fill:none;
+ stroke-linecap:round;
+ stroke-linejoin:round;
+}
+.fit-home30{
+ display:flex;
+ flex-direction:column;
+ gap:15px;
+}
+.fit-greeting30{
+ padding:8px 3px;
+}
+.fit-greeting30 h2{
+ font-size:27px;
+ letter-spacing:-.7px;
+ margin:8px 0;
+ color:var(--fit-dark);
+}
+.fit-greeting30 p{
+ color:var(--fit-muted);
+ font-size:14px;
+ margin:5px 0;
+}
+.fit-hero30{
+ background:var(--fit-dark);
+ color:white;
+ padding:23px;
+ border-radius:23px;
+}
+.fit-hero30 h2{
+ color:white;
+ margin:12px 0;
+ font-size:25px;
+}
+.fit-hero30 small{
+ color:#DCCCE3;
+}
+.fit-hero30 button{
+ width:100%;
+ background:white;
+ color:var(--fit-dark);
+ margin-top:15px;
+}
+.fit-card30{
+ background:white;
+ border:1px solid var(--fit-border);
+ border-radius:20px;
+ padding:18px;
+}
+.fit-card30 h3{
+ color:var(--fit-dark);
+ font-size:17px;
+ margin-bottom:14px;
+}
+.fit-grid30{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
+}
+.fit-stat30{
+ background:#F7F4F9;
+ padding:14px;
+ border-radius:15px;
+ min-width:0;
+}
+.fit-stat30 strong{
+ display:block;
+ font-size:25px;
+ color:var(--fit-dark);
+ letter-spacing:-.5px;
+ margin:9px 0 5px;
+}
+.fit-stat30 small{
+ display:block;
+ color:var(--fit-muted);
+ font-size:11px;
+ line-height:1.5;
+}
+.fit-track30{
+ height:7px;
+ border-radius:10px;
+ background:#E9E1ED;
+ overflow:hidden;
+ margin-top:12px;
+}
+.fit-fill30{
+ height:100%;
+ background:var(--fit-sage);
+ border-radius:10px;
+}
+.fit-meal30{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ padding:13px 0;
+ border-bottom:1px solid #EEE9F1;
+}
+.fit-meal30:last-child{
+ border:0;
+}
+.fit-meal-icon30{
+ width:42px;
+ height:42px;
+ flex-shrink:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ background:#F0EAF3;
+ color:var(--fit-primary);
+ border-radius:13px;
+}
+.fit-meal-icon30.done{
+ background:#E6F0E9;
+ color:#50866B;
+}
+.fit-meal-icon30 svg,
+.fit-menu-icon30 svg{
+ width:21px;
+ height:21px;
+ stroke:currentColor;
+ stroke-width:1.8;
+ fill:none;
+ stroke-linecap:round;
+ stroke-linejoin:round;
+}
+.fit-meal-info30{
+ flex:1;
+ min-width:0;
+}
+.fit-meal-info30 strong{
+ display:block;
+ font-size:14px;
+ margin:5px 0;
+}
+.fit-meal-info30 small{
+ font-size:11px;
+}
+.fit-action30{
+ display:flex;
+ gap:8px;
+ margin-top:12px;
+}
+.fit-action30 button{
+ flex:1;
+ padding:10px 5px;
+ font-size:13px;
+}
+.fit-menu30{
+ display:flex;
+ align-items:center;
+ text-align:left;
+ width:100%;
+ gap:13px;
+ background:white;
+ color:var(--fit-dark);
+ padding:15px 10px;
+ border-bottom:1px solid var(--fit-border);
+ border-radius:0;
+}
+.fit-menu-icon30{
+ width:43px;
+ height:43px;
+ background:#F0EAF3;
+ border-radius:13px;
+ color:var(--fit-primary);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ flex-shrink:0;
+}
+.fit-menu-info30{
+ flex:1;
+}
+.fit-menu-info30 strong{
+ display:block;
+ font-size:15px;
+ margin-bottom:5px;
+}
+.fit-menu-info30 small{
+ display:block;
+ font-size:12px;
+ font-weight:400;
+ line-height:1.5;
+}
+.fit-tip30{
+ background:#EDF3EF;
+ border-radius:15px;
+ padding:16px;
+ color:#426651;
+ font-size:13px;
+ line-height:1.6;
+}
+.fit-section-title30{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:12px;
+}
+.fit-section-title30 h3{
+ margin:0;
+}
+.fit-version{
+ font-size:10px;
+}
+#status{
+ font-size:11px;
+ padding:8px 15px;
+}
+@media(min-width:760px){
+ .fit-grid30{
+ grid-template-columns:repeat(4,1fr);
+ }
+}
+@media(max-width:370px){
+ .fit-stat30 strong{
+ font-size:21px;
+ }
+ nav button{
+ font-size:10px;
+ }
+}
+</style>
+
+<script>
+(function(){
+"use strict";
+
+const previousPage30=showPage;
+
+const version=document.querySelector(".fit-version");
+
+if(version){
+ version.textContent="Version 3.0";
+}
+
+document.querySelector("header p").textContent=
+ "Mi fuerza. Mi equilibrio. Mi bienestar.";
+
+function el30(tag,cls,text){
+ const e=document.createElement(tag);
+ if(cls)e.className=cls;
+ if(text!==undefined)e.textContent=text;
+ return e;
+}
+
+function today30(){
+ const d=new Date();
+
+ return d.getFullYear()+"-"+
+ String(d.getMonth()+1).padStart(2,"0")+"-"+
+ String(d.getDate()).padStart(2,"0");
+}
+
+const icons30={
+ home:'<path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-8h6v8"/>',
+
+ dumbbell:'<path d="M6 5v14M18 5v14M3 8v8M21 8v8M6 12h12M3 12h3M18 12h3"/>',
+
+ food:'<path d="M4 3v6a4 4 0 0 0 8 0V3M8 3v19M20 3c-3 1-5 5-5 10h5M20 3v19"/>',
+
+ chart:'<path d="M3 3v18h18M7 16l5-5 4 3 5-8"/>',
+
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+
+ calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+
+ play:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>',
+
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+
+ check:'<path d="M5 12l4 4L19 6"/>',
+
+ water:'<path d="M12 3C9 7 5 12 5 16a7 7 0 0 0 14 0c0-4-4-9-7-13z"/>',
+
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+
+ arrow:'<path d="M9 18l6-6-6-6"/>',
+
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/>'
+};
+
+function icon30(name){
+ const span=el30("span");
+
+ span.innerHTML=
+ '<svg viewBox="0 0 24 24" aria-hidden="true">'+
+ (icons30[name]||icons30.menu)+
+ '</svg>';
+
+ return span.firstElementChild;
+}
+
+function button30(label,fn,secondary=false){
+ const b=el30(
+ "button",
+ secondary?"secondary":"",
+ label
+ );
+
+ b.type="button";
+ b.onclick=fn;
+
+ return b;
+}
+
+function card30(title){
+ const c=el30("div","fit-card30");
+ if(title)c.appendChild(el30("h3","",title));
+ return c;
+}
+
+const home=el30("section","hidden");
+home.id="home30";
+
+const more=el30("section","hidden");
+more.id="more30";
+
+const main=document.querySelector("main");
+
+main.prepend(home);
+main.appendChild(more);
+
+/* POSICION DEL PROGRAMA */
+
+function trainingPosition30(){
+
+ if(!state.profile.startDate)return null;
+
+ const start=Date.parse(
+ state.profile.startDate+"T00:00:00Z"
+ );
+
+ const today=Date.parse(
+ today30()+"T00:00:00Z"
+ );
+
+ const diff=Math.round(
+ (today-start)/86400000
+ );
+
+ if(!Number.isFinite(diff))return null;
+
+ if(diff<0)return {pending:true};
+
+ if(diff>=28)return {finished:true};
+
+ return {
+ week:Math.floor(diff/7)+1,
+ day:diff%7
+ };
+}
+
+function openTraining30(){
+
+ const position=trainingPosition30();
+
+ if(position&&
+ !position.pending&&
+ !position.finished){
+
+ state.week=position.week;
+ state.day=position.day;
+
+ save();
+ renderWorkout();
+ }
+
+ showPage("inicio");
+}
+
+/* INFORMACION DE ALIMENTACION */
+
+function foodHome30(){
+
+ const date=today30();
+
+ const n=state.nutrition25;
+
+ const day=n?.days?.[date];
+
+ const done=day?.done||{};
+
+ return {
+ count:[0,1,2,3].filter(
+ i=>done[i]
+ ).length,
+
+ water:Number(day?.water)||0,
+
+ waterGoal:Number(n?.waterGoal)||2000,
+
+ kcalGoal:Number(n?.target)||1650,
+
+ proteinGoal:
+ Number(n?.assistant29?.protein)||120
+ };
+}
+
+function stat30(label,value,description,
+progress=null){
+
+ const c=el30("div","fit-stat30");
+
+ c.append(
+ el30("small","",label),
+ el30("strong","",value),
+ el30("small","",description)
+ );
+
+ if(progress!==null){
+
+ const track=el30("div","fit-track30");
+
+ const fill=el30("div","fit-fill30");
+
+ fill.style.width=
+ Math.min(
+ 100,Math.max(0,progress)
+ )+"%";
+
+ track.appendChild(fill);
+ c.appendChild(track);
+ }
+
+ return c;
+}
+
+/* INICIO */
+
+function renderHome30(){
+
+ home.replaceChildren();
+
+ const wrap=el30("div","fit-home30");
+
+ const now=new Date();
+ const hour=now.getHours();
+
+ const greeting=
+ hour<12?"¡Buenos días!":
+ hour<19?"¡Buenas tardes!":
+ "¡Buenas noches!";
+
+ const intro=el30("div","fit-greeting30");
+
+ intro.append(
+ el30("small","",
+ now.toLocaleDateString("es-MX",{
+ weekday:"long",
+ day:"numeric",
+ month:"long"
+ })),
+
+ el30("h2","",greeting),
+
+ el30("p","",
+ "Un día más para cuidar de ti.")
+ );
+
+ wrap.appendChild(intro);
+
+ /* ENTRENAMIENTO */
+
+ const hero=el30("div","fit-hero30");
+
+ hero.appendChild(
+ el30("small","","MI ENTRENAMIENTO")
+ );
+
+ const position=trainingPosition30();
+
+ if(!position){
+
+ hero.append(
+ el30("h2","","Comienza tu programa"),
+
+ el30("p","",
+ "Configura tu fecha de inicio para consultar el entrenamiento de cada día."),
+
+ button30(
+ "Configurar entrenamiento",
+ openTraining30
+ )
+ );
+
+ }else if(position.pending){
+
+ hero.append(
+ el30("h2","","Tu programa comienza pronto"),
+
+ el30("p","",
+ "Inicio: "+state.profile.startDate),
+
+ button30(
+ "Consultar mi programa",
+ ()=>showPage("rutina")
+ )
+ );
+
+ }else if(position.finished){
+
+ hero.append(
+ el30("h2","","Programa de 4 semanas"),
+
+ el30("p","",
+ "Terminó el periodo de tu programa inicial. Consulta tus registros y avances."),
+
+ button30(
+ "Revisar mi progreso",
+ ()=>showPage("progreso")
+ )
+ );
+
+ }else{
+
+ const routine=plan[position.day];
+
+ const finished=state.history.some(
+ s=>s.key===
+ position.week+"-"+position.day
+ );
+
+ hero.append(
+ el30("small","",
+ "Semana "+position.week+
+ " · "+days[position.day]),
+
+ el30("h2","",routine[0]),
+
+ el30("p","",
+ routine[1]+
+ " · "+routine[2].length+
+ " ejercicios"),
+
+ button30(
+ finished?
+ "Revisar entrenamiento":
+ position.day===6?
+ "Consultar descanso":
+ "Abrir entrenamiento de hoy",
+
+ openTraining30
+ )
+ );
+
+ if(finished){
+
+ hero.appendChild(
+ el30("p","","✓ Entrenamiento registrado")
+ );
+ }
+ }
+
+ wrap.appendChild(hero);
+
+ /* ALIMENTACION */
+
+ const food=foodHome30();
+
+ const foodCard=card30(
+ "Mi alimentación de hoy"
+ );
+
+ const stats=el30("div","fit-grid30");
+
+ stats.append(
+ stat30(
+ "Referencia de energía",
+ food.kcalGoal.toLocaleString("es-MX"),
+ "kcal por día"
+ ),
+
+ stat30(
+ "Referencia de proteína",
+ food.proteinGoal+" g",
+ "Objetivo orientativo"
+ ),
+
+ stat30(
+ "Comidas registradas",
+ food.count+"/4",
+ "Comidas realizadas",
+ food.count/4*100
+ ),
+
+ stat30(
+ "Agua registrada",
+ (food.water/1000).toFixed(2)+" L",
+ "Referencia: "+
+ (food.waterGoal/1000)+" L",
+ food.water/food.waterGoal*100
+ )
+ );
+
+ foodCard.appendChild(stats);
+
+ const actions=el30(
+ "div","fit-action30"
+ );
+
+ actions.append(
+ button30(
+ "Consultar menú",
+ ()=>showPage("nutritionPage25")
+ ),
+
+ button30(
+ "+250 ml de agua",
+ ()=>addWater30(250),
+ true
+ )
+ );
+
+ foodCard.appendChild(actions);
+
+ wrap.appendChild(foodCard);
+
+ /* HORARIOS DE COMIDAS */
+
+ const meals=card30(
+ "Mis comidas de hoy"
+ );
+
+ const date=today30();
+
+ const dayData=
+ state.nutrition25?.days?.[date];
+
+ const mealTimes30=[
+ ["08:30","Desayuno"],
+ ["11:30","Segunda comida"],
+ ["15:30","Comida principal"],
+ ["20:30","Cena"]
+ ];
+
+ mealTimes30.forEach(([time,label],i)=>{
+
+ const complete=!!dayData?.done?.[i];
+
+ const item=el30(
+ "div","fit-meal30"
+ );
+
+ const icon=el30(
+ "div",
+ "fit-meal-icon30"+
+ (complete?" done":"")
+ );
+
+ icon.appendChild(
+ icon30(complete?"check":"food")
+ );
+
+ const info=el30(
+ "div","fit-meal-info30"
+ );
+
+ info.append(
+ el30("small","",time),
+ el30("strong","",label),
+ el30("small","",
+ complete?"Registrada":"Pendiente de registrar")
+ );
+
+ const open=button30(
+ "Ver",
+ ()=>showPage("nutritionPage25"),
+ true
+ );
+
+ item.append(icon,info,open);
+
+ meals.appendChild(item);
+
+ });
+
+ wrap.appendChild(meals);
+
+ /* PROGRESO */
+
+ const progress=card30(
+ "Mi progreso"
+ );
+
+ const grid=el30("div","fit-grid30");
+
+ const weights=state.measurements
+ .filter(r=>
+ Number.isFinite(Number(r.weight))&&
+ Number(r.weight)>0
+ )
+ .slice()
+ .sort((a,b)=>
+ new Date(a.date)-new Date(b.date)
+ );
+
+ const latest=weights.length?
+ Number(weights[weights.length-1].weight):
+ null;
+
+ grid.append(
+ stat30(
+ "Último peso registrado",
+ latest===null?
+ "—":
+ latest.toFixed(1)+" kg",
+ "Consulta tu evolución"
+ ),
+
+ stat30(
+ "Entrenamientos",
+ String(state.history.length),
+ "Sesiones registradas"
+ )
+ );
+
+ progress.appendChild(grid);
+
+ const progressButton=button30(
+ "Ver mi progreso",
+ ()=>showPage("progreso"),
+ true
+ );
+
+ progressButton.style.width="100%";
+ progressButton.style.marginTop="12px";
+
+ progress.appendChild(progressButton);
+
+ wrap.appendChild(progress);
+
+ wrap.appendChild(el30(
+ "div","fit-tip30",
+ "Tu constancia importa más que alcanzar números perfectos todos los días. Respeta tu descanso y ajusta el entrenamiento a cómo te sientes."
+ ));
+
+ home.appendChild(wrap);
+}
+
+function addWater30(amount){
+
+ if(!state.nutrition25){
+
+ alert(
+ "Abre primero el módulo de alimentación."
+ );
+
+ return;
+ }
+
+ const n=state.nutrition25;
+
+ if(!n.days)n.days={};
+
+ const date=today30();
+
+ if(!n.days[date]){
+
+ n.days[date]={
+ choices:{},
+ done:{},
+ water:0
+ };
+ }
+
+ const record=n.days[date];
+
+ record.water=Math.max(
+ 0,(Number(record.water)||0)+amount
+ );
+
+ if(save())renderHome30();
+}
+
+/* MENU MAS */
+
+function menuItem30(icon,title,
+description,action){
+
+ const item=el30(
+ "button","fit-menu30"
+ );
+
+ item.type="button";
+
+ const iconBox=el30(
+ "div","fit-menu-icon30"
+ );
+
+ iconBox.appendChild(icon30(icon));
+
+ const info=el30(
+ "div","fit-menu-info30"
+ );
+
+ info.append(
+ el30("strong","",title),
+ el30("small","",description)
+ );
+
+ const arrow=icon30("arrow");
+
+ arrow.style.width="18px";
+ arrow.style.height="18px";
+ arrow.style.stroke="#A79AAC";
+
+ item.append(iconBox,info,arrow);
+
+ item.onclick=action;
+
+ return item;
+}
+
+function renderMore30(){
+
+ more.replaceChildren();
+
+ const heading=el30(
+ "div","fit-greeting30"
+ );
+
+ heading.append(
+ el30("h2","","Mi Fit 45"),
+ el30("p","","Configuración y herramientas")
+ );
+
+ more.appendChild(heading);
+
+ const tools=card30("Mi aplicación");
+
+ tools.append(
+ menuItem30(
+ "calendar",
+ "Mi programa de entrenamiento",
+ "Consulta las cuatro semanas.",
+ ()=>showPage("rutina")
+ ),
+
+ menuItem30(
+ "play",
+ "Biblioteca de videos",
+ "Demostraciones y videos favoritos.",
+ ()=>showPage("videos23")
+ ),
+
+ menuItem30(
+ "user",
+ "Mi perfil y gimnasio",
+ "Datos personales, equipo y fecha de inicio.",
+ ()=>showPage("perfil")
+ ),
+
+ menuItem30(
+ "settings",
+ "Respaldos y configuración",
+ "Exporta o restaura tus registros desde Perfil.",
+ ()=>showPage("perfil")
+ )
+ );
+
+ more.appendChild(tools);
+
+ const about=card30("Acerca de Mi Fit 45");
+
+ about.append(
+ el30("p","","Versión 3.0"),
+
+ el30("small","",
+ "Aplicación personal de entrenamiento y alimentación. Tus datos se almacenan localmente en este dispositivo. Todavía no existe sincronización en la nube.")
+ );
+
+ more.appendChild(about);
+}
+
+/* NAVEGACION PRINCIPAL */
+
+const navigation=[
+ ["home30","home","Inicio"],
+ ["inicio","dumbbell","Entrenar"],
+ ["nutritionPage25","food","Comidas"],
+ ["progreso","chart","Progreso"],
+ ["more30","menu","Más"]
+];
+
+const nav=document.querySelector("nav");
+
+nav.replaceChildren();
+
+navigation.forEach(([id,icon,label])=>{
+
+ const b=el30("button");
+
+ b.type="button";
+ b.dataset.page30=id;
+
+ b.append(
+ icon30(icon),
+ el30("span","",label)
+ );
+
+ b.onclick=()=>{
+
+ if(id==="inicio"){
+ openTraining30();
+ }else{
+ showPage(id);
+ }
+
+ };
+
+ nav.appendChild(b);
+});
+
+function highlight30(id){
+
+ let active=id;
+
+ if(id==="rutina")active="inicio";
+
+ if(id==="perfil"||id==="videos23"){
+ active="more30";
+ }
+
+ nav.querySelectorAll("button")
+ .forEach(b=>{
+
+ const selected=
+ b.dataset.page30===active;
+
+ b.classList.toggle(
+ "active30",selected
+ );
+
+ if(selected){
+ b.setAttribute("aria-current","page");
+ }else{
+ b.removeAttribute("aria-current");
+ }
+
+ });
+}
+
+showPage=function(id){
+
+ document.querySelectorAll(
+ "main > section"
+ ).forEach(s=>
+ s.classList.add("hidden")
+ );
+
+ if(id==="home30"){
+
+ home.classList.remove("hidden");
+ renderHome30();
+
+ }else if(id==="more30"){
+
+ more.classList.remove("hidden");
+ renderMore30();
+
+ }else{
+
+ previousPage30(id);
+
+ }
+
+ highlight30(id);
+
+ window.scrollTo(0,0);
+};
+
+/* ACTUALIZAR AL VOLVER A LA APP */
+
+document.addEventListener(
+ "visibilitychange",
+ ()=>{
+
+ if(!document.hidden&&
+ !home.classList.contains("hidden")){
+
+ renderHome30();
+
+ }
+
+ }
+);
+
+showPage("home30");
+
+})();
+</script>
+<!-- FIN DE ACTUALIZACION 3.0 -->
+</body>
+</html> 
  
