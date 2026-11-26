@@ -5764,6 +5764,928 @@ save();
 
 /* FIN DE ACTUALIZACION 2.7 */
 
+/* MI FIT 45 - ACTUALIZACION 2.8 */
+
+if(version)version.textContent="Version 2.8";
+
+const style28=document.createElement("style");
+
+style28.textContent=`
+.fit-edit28{
+ background:#f3edf6;
+ border-radius:14px;
+ padding:14px;
+ margin-top:15px;
+}
+.fit-edit28 h3{
+ color:#483353;
+}
+.fit-row28{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 80px 36px;
+ gap:6px;
+ align-items:center;
+ margin:10px 0;
+}
+.fit-row28 select,
+.fit-row28 input{
+ margin:0;
+ min-width:0;
+}
+.fit-row28 button{
+ padding:10px 4px;
+}
+.fit-unit28{
+ font-size:11px;
+ color:#807587;
+ margin-bottom:10px;
+}
+.fit-macros28{
+ background:white;
+ padding:12px;
+ border-radius:10px;
+ margin:12px 0;
+ line-height:1.7;
+ font-size:13px;
+}
+.fit-stock28{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 90px;
+ gap:10px;
+ align-items:center;
+ padding:12px 0;
+ border-bottom:1px solid #eee;
+}
+.fit-stock28 input{
+ margin:0;
+}
+.fit-shopping28{
+ padding:14px 0;
+ border-bottom:1px solid #eee;
+}
+.fit-shopping28 small{
+ display:block;
+ margin:5px 0;
+}
+.fit-buy28{
+ color:#735482;
+ font-weight:bold;
+}
+.fit-covered28{
+ color:#50866b;
+ font-weight:bold;
+}
+`;
+
+document.head.appendChild(style28);
+
+function storage28(){
+ const n=nutrition();
+
+ if(!n.personal28){
+ n.personal28={
+ edits:{},
+ stock:{}
+ };
+ }
+
+ return n.personal28;
+}
+
+const measures28={
+ oats:[40,"taza de 1/2"],
+ milk:[240,"taza"],
+ yogurt:[245,"taza"],
+ rice:[158,"taza de arroz cocido"],
+ beans:[170,"taza de frijoles cocidos"],
+ peanut:[16,"cucharada"],
+ oil:[13.5,"cucharada"],
+ banana:[118,"plátano mediano sin cáscara"],
+ apple:[182,"manzana mediana"],
+ tortilla:[25,"tortilla"],
+ bread:[30,"rebanada"],
+ whites:[30,"clara de huevo"],
+ avocado:[75,"medio aguacate"],
+ berries:[150,"taza de fresas"],
+ broccoli:[155,"taza de brócoli cocido"],
+ nuts:[28,"porción de almendras"],
+ cottage:[225,"taza"],
+ eggs:[1,"huevo"]
+};
+
+function equivalence28(id,qty){
+ const measure=measures28[id];
+
+ if(!measure||!qty)return "";
+
+ return "≈ "+
+ Number((qty/measure[0]).toFixed(2))+
+ " × "+measure[1];
+}
+
+function foodAllowed28(id){
+ if(!foods[id])return false;
+
+ const p=preferences26();
+
+ if(
+ p.excluded.includes(id)||
+ p.restricted.includes(id)
+ ){
+ return false;
+ }
+
+ const name=normalize26(foods[id][0]);
+
+ return !p.customExcluded.some(value=>{
+ const normalized=normalize26(value);
+
+ return normalized&&name.includes(normalized);
+ });
+}
+
+const oldResolve28=resolveRecipe26;
+
+resolveRecipe26=function(date,index){
+ const data=daily(date);
+
+ if(data.done[index]){
+ return oldResolve28(date,index);
+ }
+
+ const edit=
+ storage28().edits[date+"-"+index];
+
+ const original=oldResolve28(date,index);
+
+ if(!edit)return original;
+
+ if(
+ original.blocked||
+ original.base!==edit.base||
+ !Array.isArray(edit.items)||
+ !edit.items.length||
+ !edit.items.every(([id,qty])=>
+ foodAllowed28(id)&&
+ Number.isFinite(qty)&&qty>0
+ )
+ ){
+ return original;
+ }
+
+ return {
+ title:original.title+" (personalizado)",
+ base:original.base,
+ items:JSON.parse(JSON.stringify(edit.items)),
+ prep:"Preparación original: "+original.prep+
+ " Adapta la preparación a los ingredientes que hayas sustituido.",
+ personalized28:true
+ };
+};
+
+const oldMeal28=renderMeal;
+
+function addEditor28(card,index){
+ const data=daily();
+ const recipe=resolveRecipe26(foodDate,index);
+
+ if(data.done[index]||recipe.blocked)return;
+
+ const open=button(
+ "Personalizar ingredientes",
+ ()=>{
+ const existing=card.querySelector(
+ ".fit-edit28"
+ );
+
+ if(existing){
+ existing.remove();
+ return;
+ }
+
+ showEditor28(card,index);
+ },true);
+
+ card.appendChild(open);
+
+ if(recipe.personalized28){
+ card.appendChild(el(
+ "small","",
+ "Platillo personalizado por ti"
+ ));
+ }
+}
+
+function showEditor28(card,index){
+ const date=foodDate;
+ const recordKey=date+"-"+index;
+
+ const recipe=resolveRecipe26(date,index);
+
+ if(recipe.blocked||daily(date).done[index]){
+ return;
+ }
+
+ let items=JSON.parse(
+ JSON.stringify(recipe.items)
+ );
+
+ const editor=el("div","fit-edit28");
+
+ editor.append(
+ el("h3","","Personalizar mi plato"),
+ el("p","fit-food-note",
+ "Cambia ingredientes y cantidades. Revisa las unidades de medida y los valores nutricionales antes de guardar.")
+ );
+
+ const rows=el("div");
+
+ const totals=el("div","fit-macros28");
+
+ function refreshTotals(){
+ const m=macros26({items});
+
+ totals.textContent=
+ Math.round(m.kcal)+" kcal · "+
+ formatMacros26(m);
+ }
+
+ function drawRows(){
+ rows.replaceChildren();
+
+ items.forEach((item,indexItem)=>{
+ const row=el("div","fit-row28");
+
+ const select=el("select");
+
+ Object.entries(foods)
+ .filter(([id])=>foodAllowed28(id))
+ .sort((a,b)=>
+ a[1][0].localeCompare(b[1][0])
+ )
+ .forEach(([id,f])=>{
+ const option=el(
+ "option","",f[0]+" ("+f[1]+")"
+ );
+
+ option.value=id;
+ select.appendChild(option);
+ });
+
+ select.value=item[0];
+
+ const quantity=el("input");
+
+ quantity.type="number";
+ quantity.min="0.1";
+ quantity.step="0.1";
+ quantity.value=item[1];
+
+ const unit=el(
+ "div","fit-unit28",
+ foods[item[0]][1]+" · "+
+ equivalence28(item[0],item[1])
+ );
+
+ function refreshUnit(){
+ unit.textContent=
+ foods[item[0]][1]+" · "+
+ equivalence28(item[0],item[1]);
+ }
+
+ select.onchange=()=>{
+ const previousId=item[0];
+ const nextId=select.value;
+
+ if(!foodAllowed28(nextId)){
+ select.value=previousId;
+ return;
+ }
+
+ const oldUnit=foods[previousId][1];
+ const newUnit=foods[nextId][1];
+
+ item[0]=nextId;
+
+ if(oldUnit!==newUnit){
+ item[1]=newUnit==="pzas"?1:100;
+ }else{
+ const oldMacro=macro25[previousId]||[0,0,0];
+ const nextMacro=macro25[nextId]||[0,0,0];
+
+ let nutrient=0;
+
+ if(oldMacro[1]>oldMacro[0]&&
+ oldMacro[1]>oldMacro[2]){
+ nutrient=1;
+ }
+
+ if(oldMacro[2]>oldMacro[0]&&
+ oldMacro[2]>oldMacro[1]){
+ nutrient=2;
+ }
+
+ const compatible=
+ oldMacro[nutrient]>0&&
+ nextMacro[nutrient]>0&&
+ nextMacro[nutrient]>=
+ oldMacro[nutrient]*0.4;
+
+ if(compatible){
+ const estimate=
+ item[1]*oldMacro[nutrient]/
+ nextMacro[nutrient];
+
+ item[1]=Math.max(
+ newUnit==="pzas"?0.5:5,
+ Math.min(
+ item[1]*2,
+ newUnit==="pzas"?
+ Math.round(estimate*2)/2:
+ Math.round(estimate/5)*5
+ )
+ );
+ }
+ }
+
+ quantity.value=item[1];
+
+ refreshUnit();
+ refreshTotals();
+ };
+
+ quantity.oninput=()=>{
+ const value=Number(quantity.value);
+
+ item[1]=
+ Number.isFinite(value)&&value>0?
+ value:0;
+
+ refreshUnit();
+ refreshTotals();
+ };
+
+ const remove=button("×",()=>{
+ items.splice(indexItem,1);
+ drawRows();
+ },true);
+
+ row.append(select,quantity,remove);
+
+ rows.append(row,unit);
+ });
+
+ refreshTotals();
+ }
+
+ editor.appendChild(rows);
+
+ editor.appendChild(button(
+ "Agregar ingrediente",()=>{
+ const id=Object.keys(foods)
+ .find(foodAllowed28);
+
+ if(!id){
+ alert("No hay ingredientes compatibles.");
+ return;
+ }
+
+ items.push([
+ id,
+ foods[id][1]==="pzas"?1:50
+ ]);
+
+ drawRows();
+ },true));
+
+ editor.appendChild(totals);
+
+ editor.appendChild(el(
+ "p","fit-food-note",
+ "Las equivalencias y sustituciones son aproximadas. Revisa especialmente las cantidades cuando cambies gramos por piezas o alimentos de distinto tipo."
+ ));
+
+ editor.appendChild(button(
+ "Guardar mi plato",()=>{
+ if(daily(date).done[index]){
+ alert("La comida ya está registrada.");
+ return;
+ }
+
+ if(
+ !items.length||
+ !items.every(([id,qty])=>
+ foodAllowed28(id)&&
+ Number.isFinite(qty)&&
+ qty>0
+ )
+ ){
+ alert("Revisa los ingredientes y cantidades.");
+ return;
+ }
+
+ const merged={};
+
+ items.forEach(([id,qty])=>{
+ merged[id]=(merged[id]||0)+qty;
+ });
+
+ storage28().edits[recordKey]={
+ base:recipe.base,
+ items:Object.entries(merged)
+ };
+
+ delete snapshots26()[recordKey];
+
+ nutrition().shopping={};
+
+ if(save()){
+ renderFood();
+ }
+ }));
+
+ editor.appendChild(button(
+ "Restaurar receta original",()=>{
+ delete storage28().edits[recordKey];
+
+ nutrition().shopping={};
+
+ save();
+ renderFood();
+ },true));
+
+ card.appendChild(editor);
+
+ drawRows();
+}
+
+renderMeal=function(index){
+ const card=oldMeal28(index);
+
+ const recipe=resolveRecipe26(
+ foodDate,index
+ );
+
+ if(!recipe.blocked){
+ const rows=card.querySelectorAll(
+ ".fit-food-ingredient"
+ );
+
+ rows.forEach((row,i)=>{
+ const item=recipe.items[i];
+
+ if(!item)return;
+
+ const equivalent=equivalence28(
+ item[0],item[1]
+ );
+
+ if(!equivalent)return;
+
+ const label=el("small","",equivalent);
+
+ label.style.display="block";
+
+ if(row.firstElementChild){
+ row.firstElementChild.appendChild(label);
+ }
+ });
+ }
+
+ addEditor28(card,index);
+
+ return card;
+};
+
+/* INVENTARIO DE DESPENSA */
+
+function stock28(){
+ return storage28().stock;
+}
+
+function renderPantry28(){
+ const c=adminCard27(
+ "Mi refrigerador y despensa"
+ );
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Registra las cantidades que tienes disponibles hoy. Usa peso crudo para carnes y arroz seco, tal como los comprarías."
+ ));
+
+ const search=el("input");
+
+ search.type="search";
+ search.placeholder="Buscar alimento...";
+
+ c.appendChild(search);
+
+ const onlyStock=el("input");
+ onlyStock.type="checkbox";
+
+ const filterLabel=el(
+ "label","fit-food-check"
+ );
+
+ filterLabel.append(
+ onlyStock,
+ el("span","","Mostrar solo lo que tengo")
+ );
+
+ c.appendChild(filterLabel);
+
+ const list=el("div");
+
+ function draw(){
+ list.replaceChildren();
+
+ const query=normalize26(search.value);
+
+ Object.entries(foods)
+ .sort((a,b)=>
+ a[1][0].localeCompare(b[1][0])
+ )
+ .forEach(([id,f])=>{
+ if(!normalize26(f[0]).includes(query)){
+ return;
+ }
+
+ if(onlyStock.checked&&
+ !(Number(stock28()[id])>0)){
+ return;
+ }
+
+ const row=el("div","fit-stock28");
+
+ const info=el("div");
+
+ info.append(
+ el("strong","",f[0]),
+ el("small",""," · "+f[1]+
+ (f[4]&&f[4]!==1?
+ " en peso de compra":""))
+ );
+
+ const input=el("input");
+
+ input.type="number";
+ input.min="0";
+ input.step=f[1]==="pzas"?"1":"0.1";
+ input.placeholder="0";
+ input.value=stock28()[id]||"";
+
+ input.setAttribute(
+ "aria-label",
+ "Existencias de "+f[0]
+ );
+
+ input.oninput=()=>{
+ const value=Number(input.value);
+
+ if(
+ !Number.isFinite(value)||
+ value<0
+ )return;
+
+ stock28()[id]=value;
+
+ if(value>0){
+ if(!preferences26().available.includes(id)){
+ preferences26().available.push(id);
+ }
+ }else{
+ preferences26().available=
+ preferences26().available.filter(
+ x=>x!==id
+ );
+ }
+
+ save();
+ };
+
+ row.append(info,input);
+ list.appendChild(row);
+ });
+ }
+
+ search.oninput=draw;
+ onlyStock.onchange=draw;
+
+ c.appendChild(list);
+
+ c.appendChild(button(
+ "Guardar mi inventario",()=>{
+ if(save()){
+ alert("Inventario guardado.");
+ }
+ }));
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Las existencias no se descuentan automáticamente cuando registras una comida. Actualízalas conforme utilices tus alimentos."
+ ));
+
+ section.appendChild(c);
+
+ draw();
+}
+
+/* LISTA DE COMPRAS CON EXISTENCIAS */
+
+renderShopping=function(){
+ const dates=weekDates();
+ const weekKey=dates[0];
+
+ const c=card("Mi lista de compras");
+
+ c.appendChild(el(
+ "p","",
+ "Semana del "+dates[0]+
+ " al "+dates[6]
+ ));
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Calculada con las comidas pendientes de esta semana. Se descuentan las existencias que registraste en tu despensa."
+ ));
+
+ const date=el("input");
+
+ date.type="date";
+ date.value=foodDate;
+
+ date.onchange=()=>{
+ if(date.value){
+ foodDate=date.value;
+ renderFood();
+ }
+ };
+
+ c.appendChild(date);
+
+ c.appendChild(button(
+ "Actualizar mi despensa",()=>{
+ foodTab="pantry28";
+ renderFood();
+ },true));
+
+ const totals={};
+
+ dates.forEach(d=>{
+ for(let i=0;i<4;i++){
+ if(daily(d).done[i])continue;
+
+ const recipe=resolveRecipe26(d,i);
+
+ if(recipe.blocked)continue;
+
+ recipe.items.forEach(([id,qty])=>{
+ totals[id]=(totals[id]||0)+qty;
+ });
+ }
+ });
+
+ const n=nutrition();
+
+ if(!n.shopping[weekKey]){
+ n.shopping[weekKey]={};
+ }
+
+ const checked=n.shopping[weekKey];
+
+ const lines=[];
+
+ const groups=[
+ "Carnicería","Alsuper"
+ ];
+
+ groups.forEach(store=>{
+ c.appendChild(el("h3","",store));
+
+ lines.push(store);
+
+ const products=Object.entries(totals)
+ .filter(([id])=>
+ foods[id]&&foods[id][2]===store
+ )
+ .sort((a,b)=>
+ foods[a[0]][0].localeCompare(
+ foods[b[0]][0]
+ )
+ );
+
+ if(!products.length){
+ c.appendChild(el(
+ "small","",
+ "No hay ingredientes pendientes."
+ ));
+ }
+
+ products.forEach(([id,qty])=>{
+ const f=foods[id];
+
+ const need=Math.ceil(
+ qty*(f[4]||1)
+ );
+
+ const have=Math.max(
+ 0,Number(stock28()[id])||0
+ );
+
+ const buy=Math.max(
+ 0,Math.ceil(need-have)
+ );
+
+ const item=el(
+ "div","fit-shopping28"
+ );
+
+ const label=el(
+ "label","fit-food-check"
+ );
+
+ const checkbox=el("input");
+
+ checkbox.type="checkbox";
+ checkbox.disabled=buy===0;
+
+ const purchaseKey=id+"-"+buy;
+
+ checkbox.checked=
+ buy===0||!!checked[purchaseKey];
+
+ checkbox.onchange=()=>{
+ checked[purchaseKey]=
+ checkbox.checked;
+
+ save();
+ };
+
+ label.append(
+ checkbox,
+ el("strong","",f[0])
+ );
+
+ item.append(
+ label,
+ el("small","",
+ "Necesitas: "+need+" "+f[1]),
+ el("small","",
+ "Tienes: "+have+" "+f[1]),
+ el(
+ "div",
+ buy?"fit-buy28":"fit-covered28",
+ buy?
+ "Comprar: "+buy+" "+f[1]:
+ "Ya tienes suficiente"
+ )
+ );
+
+ if(buy>0&&!checkbox.checked){
+ lines.push(
+ f[0]+": "+buy+" "+f[1]
+ );
+ }
+
+ c.appendChild(item);
+ });
+ });
+
+ c.appendChild(button(
+ "Copiar lista de compras",async()=>{
+ try{
+ await navigator.clipboard.writeText(
+ lines.join("\n")
+ );
+
+ alert("Lista copiada");
+ }catch(error){
+ const text=el("textarea");
+
+ text.value=lines.join("\n");
+ text.style.width="100%";
+ c.appendChild(text);
+ text.select();
+ }
+ }));
+
+ c.appendChild(button(
+ "Desmarcar compras",()=>{
+ n.shopping[weekKey]={};
+ save();
+ renderFood();
+ },true));
+
+ c.appendChild(el(
+ "p","fit-food-note",
+ "Las cantidades son aproximadas. Revisa caducidades, presentación de los productos y alimentos perecederos antes de comprar."
+ ));
+
+ section.appendChild(c);
+};
+
+/* REGENERACION DEL MENU */
+
+const oldGenerate28=generateWeek26;
+
+generateWeek26=function(){
+ if(!confirm(
+ "¿Generar otro menú para esta semana? Se restaurarán las personalizaciones de las comidas pendientes."
+ )){
+ return;
+ }
+
+ weekDates().forEach(date=>{
+ for(let i=0;i<4;i++){
+ if(!daily(date).done[i]){
+ delete storage28().edits[
+ date+"-"+i
+ ];
+ }
+ }
+ });
+
+ oldGenerate28();
+};
+
+/* NAVEGACION */
+
+const oldRenderFood28=renderFood;
+
+renderFood=function(){
+ if(foodTab==="pantry28"){
+ hydrate27();
+
+ section.replaceChildren();
+
+ const banner=el(
+ "div","fit-food-banner"
+ );
+
+ banner.append(
+ el("small","","Mi Fit 45"),
+ el("h2","","Mi despensa")
+ );
+
+ section.appendChild(banner);
+
+ const controls=el(
+ "div","fit-food-actions"
+ );
+
+ controls.append(
+ button("Volver al menú",()=>{
+ foodTab="menu";
+ renderFood();
+ },true),
+
+ button("Lista de compras",()=>{
+ foodTab="shopping";
+ renderFood();
+ },true)
+ );
+
+ section.appendChild(controls);
+
+ renderPantry28();
+
+ return;
+ }
+
+ oldRenderFood28();
+
+ const controls=el(
+ "div","fit-food-actions"
+ );
+
+ controls.style.marginBottom="15px";
+
+ controls.appendChild(button(
+ "Mi despensa",()=>{
+ foodTab="pantry28";
+ renderFood();
+ },true));
+
+ const tabs=section.querySelector(
+ ".fit-food-tabs"
+ );
+
+ if(tabs){
+ tabs.after(controls);
+ }else{
+ const banner=section.querySelector(
+ ".fit-food-banner"
+ );
+
+ if(banner)banner.after(controls);
+ }
+};
+
+storage28();
+save();
+
+/* FIN DE ACTUALIZACION 2.8 */
+
 
 nutrition();
 save();
